@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs');
+const path = require('path');
 
 const FW_SECTION_HEADER_LENGTH = 0x100;
 
@@ -11,9 +12,12 @@ if (process.argv.length <= 2) {
 }
 
 const inputFileName = process.argv[2];
+const outputDirectoryName = path.dirname(inputFileName);
 const fd = fs.openSync(inputFileName, 'r');
 const buffer = Buffer.alloc(FW_SECTION_HEADER_LENGTH);
+
 let readPosition = 0;
+let sectionCount = 0;
 
 while(true) {
     let bytesRead = fs.readSync(fd, buffer, 0, buffer.length, readPosition);
@@ -37,6 +41,15 @@ while(true) {
         console.error(`Incomplete section read: ${bytesRead} < ${sectionBuffer.length}`);
         return;
     }
+
+    // Write section to file
+    const sectionFileName = path.basename(inputFileName)
+        + `.${sectionCount}`
+        + (parsedHeader.sectionId ? `.${parsedHeader.sectionId}` : '');
+
+    fs.writeFileSync(path.join(outputDirectoryName, sectionFileName), sectionBuffer);
+
+    sectionCount++;
 }
 
 function parseHeader(header) {
