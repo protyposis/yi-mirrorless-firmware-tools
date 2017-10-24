@@ -42,6 +42,19 @@ while(true) {
         return;
     }
 
+    // Test checksum
+    let sum = 0;
+    for (let i = 0; i < sectionBuffer.length; i++) {
+        sum += sectionBuffer.readUInt8(i);
+    }
+
+    if (sum !== parsedHeader.sectionSum) {
+        console.error(`Checksum test failed: ${sum} != ${parsedHeader.sectionSum}`);
+    }
+    else {
+        console.log('Checksum test ok');
+    }
+
     // Write section to file
     const sectionFileName = path.basename(inputFileName)
         + `.${sectionCount}`
