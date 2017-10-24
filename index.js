@@ -96,6 +96,9 @@ function parseHeader(header) {
                     parsedHeader.sectionOffset = parseInt(value);
                     break;
             }
+        } else {
+            parsedHeader.followingSectionIds = parsedHeader.followingSectionIds || [];
+            parsedHeader.followingSectionIds.push(part);
         }
     });
 
