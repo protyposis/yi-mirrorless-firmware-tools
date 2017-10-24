@@ -40,6 +40,8 @@ while(true) {
     if (bytesRead < sectionBuffer.length) {
         console.error(`Incomplete section read: ${bytesRead} < ${sectionBuffer.length}`);
         return;
+    } else {
+        console.log('Section read ok');
     }
 
     // Test checksum
