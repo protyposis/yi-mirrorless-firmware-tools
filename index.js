@@ -52,7 +52,7 @@ function parseHeader(header) {
     };
 
     const parts = header.split(' ')
-        // Remove empty items (null strings)
+        // Remove empty items (null strings / spaces)
         .filter((part) => part !== '')
         // Remove whitespace paddings
         .map((part) => part.trim());
