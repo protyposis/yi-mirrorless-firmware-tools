@@ -5,7 +5,7 @@ const fs = require('fs');
 const FW_SECTION_HEADER_LENGTH = 0x100;
 
 if (process.argv.length <= 2) {
-    console.log('usage: npm start <inputfile>');
+    console.log('usage: npm run unpack <inputfile>');
     console.error('Arguments missing');
     return;
 }
