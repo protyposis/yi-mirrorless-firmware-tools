@@ -11,24 +11,33 @@ if (process.argv.length <= 2) {
 }
 
 const inputFileName = process.argv[2];
+const fd = fs.openSync(inputFileName, 'r');
+const buffer = Buffer.alloc(FW_SECTION_HEADER_LENGTH);
+let readPosition = 0;
 
-fs.open(inputFileName, 'r', (err, fd) => {
-    if (err) {
-        throw err.message;
+while(true) {
+    let bytesRead = fs.readSync(fd, buffer, 0, buffer.length, readPosition);
+
+    if (bytesRead === 0) {
+        console.log('EOF');
+        return;
     }
 
-    let buffer = Buffer.alloc(FW_SECTION_HEADER_LENGTH);
+    readPosition += bytesRead;
 
-    fs.read(fd, buffer, 0, FW_SECTION_HEADER_LENGTH, 0, (err, bytesRead, buffer) => {
-        if (err) {
-            throw err.message;
-        }
+    const header = buffer.toString('ascii').trim();
+    console.log(header);
+    const parsedHeader = parseHeader(header);
 
-        const header = buffer.toString('ascii');
-        console.log(header);
-        parseHeader(header);
-    });
-});
+    const sectionBuffer = Buffer.alloc(parsedHeader.sectionLength);
+    bytesRead = fs.readSync(fd, sectionBuffer, 0, sectionBuffer.length, readPosition);
+    readPosition += bytesRead;
+
+    if (bytesRead < sectionBuffer.length) {
+        console.error(`Incomplete section read: ${bytesRead} < ${sectionBuffer.length}`);
+        return;
+    }
+}
 
 function parseHeader(header) {
     const parsedHeader = {
