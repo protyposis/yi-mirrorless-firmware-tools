@@ -1,0 +1,11 @@
+{
+  "name": "yi-mirrorless-firmware-tools",
+  "version": "0.1.0",
+  "description": "YI M1 Mirrorless Camera Firmware Tools",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Mario Guggenberger <mg@protyposis.net>",
+  "license": "ISC"
+}
