@@ -20,31 +20,38 @@ let readPosition = 0;
 let sectionCount = 0;
 
 while(true) {
+    // Read section header
     let bytesRead = fs.readSync(fd, buffer, 0, buffer.length, readPosition);
+    readPosition += bytesRead;
 
+    // Check for EOF if no more header was read
     if (bytesRead === 0) {
         console.log('EOF');
         return;
     }
 
-    readPosition += bytesRead;
+    console.log(`----- Section ${sectionCount} -----`);
 
+    // Parse section header
     const header = buffer.toString('ascii').trim();
-    console.log(header);
+    console.log(`Raw header string: ${header}`);
     const parsedHeader = parseHeader(header);
+    console.log(`Parsed header:`, parsedHeader);
 
+    // Read section body
     const sectionBuffer = Buffer.alloc(parsedHeader.sectionLength);
     bytesRead = fs.readSync(fd, sectionBuffer, 0, sectionBuffer.length, readPosition);
     readPosition += bytesRead;
 
+    // Check read for completeness
     if (bytesRead < sectionBuffer.length) {
         console.error(`Incomplete section read: ${bytesRead} < ${sectionBuffer.length}`);
         return;
     } else {
-        console.log('Section read ok');
+        console.log(`Section read ok (${bytesRead} bytes)`);
     }
 
-    // Test checksum
+    // Calculate and test checksum
     let sum = 0;
     for (let i = 0; i < sectionBuffer.length; i++) {
         sum += sectionBuffer.readUInt8(i);
@@ -54,7 +61,7 @@ while(true) {
         console.error(`Checksum test failed: ${sum} != ${parsedHeader.sectionSum}`);
     }
     else {
-        console.log('Checksum test ok');
+        console.log(`Checksum test ok (${sum})`);
     }
 
     // Write section to file
@@ -63,12 +70,13 @@ while(true) {
         + (parsedHeader.sectionId ? `.${parsedHeader.sectionId}` : '');
 
     fs.writeFileSync(path.join(outputDirectoryName, sectionFileName), sectionBuffer);
+    console.log(`Output file: ${sectionFileName}`);
 
     sectionCount++;
 }
 
 function parseHeader(header) {
-    const parsedHeader = {
+    let parsedHeader = {
         sectionId: undefined,
         sectionLength: undefined,
         deviceId: undefined,
@@ -130,7 +138,8 @@ function parseHeader(header) {
         }
     });
 
-    console.log(parts, parsedHeader);
+    // Remove undefined properties
+    parsedHeader = JSON.parse(JSON.stringify(parsedHeader));
 
     return parsedHeader;
 }
