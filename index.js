@@ -14,14 +14,14 @@ if (process.argv.length <= 2) {
 const inputFileName = process.argv[2];
 const outputDirectoryName = path.dirname(inputFileName);
 const fd = fs.openSync(inputFileName, 'r');
-const buffer = Buffer.alloc(FW_SECTION_HEADER_LENGTH);
+const headerBuffer = Buffer.alloc(FW_SECTION_HEADER_LENGTH);
 
 let readPosition = 0;
 let sectionCount = 0;
 
 while(true) {
     // Read section header
-    let bytesRead = fs.readSync(fd, buffer, 0, buffer.length, readPosition);
+    let bytesRead = fs.readSync(fd, headerBuffer, 0, headerBuffer.length, readPosition);
     readPosition += bytesRead;
 
     // Check for EOF if no more header was read
@@ -33,13 +33,13 @@ while(true) {
     console.log(`----- Section ${sectionCount} -----`);
 
     // Parse section header
-    const header = buffer.toString('ascii').trim();
-    console.log(`Raw header string: ${header}`);
-    const parsedHeader = parseHeader(header);
-    console.log(`Parsed header:`, parsedHeader);
+    const headerString = headerBuffer.toString('ascii').trim();
+    console.log(`Raw header string: ${headerString}`);
+    const header = parseHeader(headerString);
+    console.log(`Parsed header:`, header);
 
     // Read section body
-    const sectionBuffer = Buffer.alloc(parsedHeader.sectionLength);
+    const sectionBuffer = Buffer.alloc(header.sectionLength);
     bytesRead = fs.readSync(fd, sectionBuffer, 0, sectionBuffer.length, readPosition);
     readPosition += bytesRead;
 
@@ -57,8 +57,8 @@ while(true) {
         sum += sectionBuffer.readUInt8(i);
     }
 
-    if (sum !== parsedHeader.sectionSum) {
-        console.error(`Checksum test failed: ${sum} != ${parsedHeader.sectionSum}`);
+    if (sum !== header.sectionSum) {
+        console.error(`Checksum test failed: ${sum} != ${header.sectionSum}`);
     }
     else {
         console.log(`Checksum test ok (${sum})`);
@@ -67,7 +67,7 @@ while(true) {
     // Write section to file
     const sectionFileName = path.basename(inputFileName)
         + `.${sectionCount}`
-        + (parsedHeader.sectionId ? `.${parsedHeader.sectionId}` : '');
+        + (header.sectionId ? `.${header.sectionId}` : '');
 
     fs.writeFileSync(path.join(outputDirectoryName, sectionFileName), sectionBuffer);
     console.log(`Output file: ${sectionFileName}`);
@@ -75,7 +75,7 @@ while(true) {
     sectionCount++;
 }
 
-function parseHeader(header) {
+function parseHeader(headerString) {
     let parsedHeader = {
         sectionId: undefined,
         sectionLength: undefined,
@@ -87,7 +87,7 @@ function parseHeader(header) {
         followingSectionIds: undefined,
     };
 
-    const parts = header.split(' ')
+    const parts = headerString.split(' ')
         // Remove empty items (null strings / spaces)
         .filter((part) => part !== '')
         // Remove whitespace paddings
