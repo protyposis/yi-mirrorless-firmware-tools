@@ -49,10 +49,8 @@ To lay the roots for a firmware hack.
  * Add 24p video modes
  * Decrease JPEG compression
  * Change focus peaking color
- * Disable / increase the 500 shot limit of beta versions
  * Fix UX issues
    * Disable full shutter button press during video recording which stops the recording while a half press triggers focus
-   * Avoid resetting focus to S-AF after a timelapse recording
    
 > How can I contribute?
 
