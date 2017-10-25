@@ -36,6 +36,13 @@ The `LENGTH` is the length in bytes of the following section body. `SUM` is a si
 
 A similar header format can be found in the firmware of an unknown device C5932 / C5932-v84. A similar format, but with shorter length, can also be found on some Fujifilm cameras (e.g. Finepix S800).
 
+### Next steps
+
+ * Identify the purpose of sections 2 & 3
+ * Identify the exact format of the first section
+ * Disassemble first section
+ * Change something simple (e.g. the 500 shot limit in the beta firmware), repack FW file and upload to camera
+
 FAQ
 ---
 
