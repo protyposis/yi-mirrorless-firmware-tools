@@ -107,8 +107,7 @@ function unpack(fileName, targetDirectory) {
 
         // Check read for completeness
         if (bytesRead < sectionBuffer.length) {
-            console.error(`Incomplete section read: ${bytesRead} < ${sectionBuffer.length}`);
-            return;
+            throw `Incomplete section read: ${bytesRead} < ${sectionBuffer.length}`;
         } else {
             console.log(`Section read ok (${bytesRead} bytes)`);
         }
@@ -120,7 +119,7 @@ function unpack(fileName, targetDirectory) {
         }
 
         if (sum !== header.sectionSum) {
-            console.error(`Checksum test failed: ${sum} != ${header.sectionSum}`);
+            throw `Checksum test failed: ${sum} != ${header.sectionSum}`;
         }
         else {
             console.log(`Checksum test ok (${sum})`);

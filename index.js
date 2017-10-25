@@ -12,4 +12,8 @@ if (process.argv.length <= 2) {
 const inputFileName = process.argv[2];
 const outputDirectoryName = path.dirname(inputFileName);
 
-firmware.unpack(inputFileName, outputDirectoryName);
+try {
+    firmware.unpack(inputFileName, outputDirectoryName);
+} catch (error) {
+    console.error(error);
+}
