@@ -18,8 +18,8 @@ Firmware files consist of 4 sections.
 | -------------- | ---------- | ---- | ----------- |
 | 0              | *none*     | variable, ~7 MB | Most probably the actual firmware code. Seems to be lightly scrambled or infused with some kind of checksum every 8 bytes. Could not make much sense of it yet. Can easily be seen in string values, e.g. `Copyr.ight 200.9 Murata. Manufac.turing C.o.,Ltd` or `text./html.Spl.ain.Sx.Ucs.s.applic.ation/js.on([avasc.ript.ima.ge/jpeg` (this intermediate byte is always 0xFF when 8 more ASCII chars follow). |
 | 1              | ND1        | variable, ~4 MB | Offset 0x1600000. Memory image that contains resources like bitmaps, fonts, and texts in different languages |
-| 2              | IPL        | 128 kB, 0x20000 byte | unknown, second half empty |
-| 3              | PTBL       | 4 kB, 0x1000 byte | unknown, mostly empty |
+| 2              | IPL        | 128 kB, 0x20000 byte | Bootloader (Initial Program Loader) |
+| 3              | PTBL       | 4 kB, 0x1000 byte | Partition table, unknown format |
 
 ### Section headers
 
@@ -36,10 +36,44 @@ The `LENGTH` is the length in bytes of the following section body. `SUM` is a si
 
 A similar header format can be found in the firmware of an unknown device C5932 / C5932-v84. A similar format, but with shorter length, can also be found on some Fujifilm cameras (e.g. Finepix S800).
 
+### Hardware & Software Identification
+
+Some interesting strings:
+
+Section 0 / System
+
+ * minios/iap_app
+ * C:/XC_ODM/sdk/SDK_selfcheck/src/EV9x_DevEnv
+ * minios/me_app
+ * BCM4343A1_00_1.002 -> Wifi radio?
+ * WA1 37.4MHz Murata Type-1FJ BT4.1 OTP-BD -> Bluetooth radio?
+ * auth-keepalive-txbf-pktfilter-mchan-proptxstatus Version: 7.10.48.2 CRC: 396141be Date: Thu 2016-05-19 16:51:41 KST Ucode: 997.0 FWID.: 01-b37064e2
+ * C%s: only support 1-stream 11n_256QAM for non-11ac compiled device!
+ * Copyright (c) 2009-2010 Tokyo Electron Device Ltd
+ * Broadcom BCM.%s 802.11 Wireless Controller %s
+ * BCM43
+ * Broadcom-0
+ * 43430a1-roml/sdio-g-pool-apcs-i
+ * auth Version: 7.10.48.2 CRC: 6164d53b Date: Tue 2016-04-05 10:19:38 KST Ucode
+ * caddr=00:90:4c:c5:12 -> Epigram MAC (Broadcom)
+ * xtalfreq=374
+ * bcm9
+ * Copyright 2009 Murata Manufacturing Co.,Ltd
+
+Section 2 / IPL
+
+ * PureNAND IPL ev9x-v1.8t.r1864 (Mimasaka) [DEBUG BUILD] (Feb 10 2016 10:30:54)
+ * EV9XES1.0
+ * EV9XES2.0
+ * Warning: EV9X ES1.0 does not use 513MHz, it was changed to 400MHz
+ * ARM926_1
+ * ARM926_2
+ * BCH2K124
+
 ### Next steps
 
- * Identify the purpose of sections 2 & 3
- * Identify the exact format of the first section
+ * Identify the exact format of the first section / descramble
+ * Identify partition table format and decode
  * Disassemble first section
  * Change something simple (e.g. the 500 shot limit in the beta firmware), repack FW file and upload to camera
 
