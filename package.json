@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "unpack": "node index.js"
+    "unpack": "node index.js unpack",
+    "strings": "node index.js strings"
   },
   "author": "Mario Guggenberger <mg@protyposis.net>",
   "license": "ISC"

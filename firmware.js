@@ -39,9 +39,9 @@ function parseHeader(headerString) {
         }
 
         if (isKeyValue) {
-            const [ key, value ] = part.split('=');
+            const [key, value] = part.split('=');
 
-            switch(key) {
+            switch (key) {
                 case 'LENGTH':
                     parsedHeader.sectionLength = parseInt(value);
                     break;
@@ -81,7 +81,7 @@ function unpack(fileName, targetDirectory) {
     let readPosition = 0;
     let sectionCount = 0;
 
-    while(true) {
+    while (true) {
         // Read section header
         let bytesRead = fs.readSync(fd, headerBuffer, 0, headerBuffer.length, readPosition);
         readPosition += bytesRead;
@@ -137,5 +137,50 @@ function unpack(fileName, targetDirectory) {
     }
 }
 
+/**
+ * Extracts strings from section 0
+ * @param buffer
+ */
+function extractStrings(buffer) {
+    const string = [];
+    let stringIndex = 0;
+
+    for (let i = 0; i < buffer.length; i++) {
+        const byte = buffer.readUInt8(i);
+
+        if (byte >= 32 && byte <= 126) {
+            if (string.length === 0) {
+                stringIndex = i;
+            }
+
+            string.push(byte);
+        } else if (string.length > 0 && byte === 0xFF) {
+            // String continuation length indicator byte
+            // just skip over and continue reading for now
+            // Some byte indicators might be:
+            // 0xFF = 8 chars
+            // 0x7F = 7 chars
+            // 0xBF = 6 chars
+            // 0xEF = 4 chars
+            // 0xF7 = 3 chars
+            // 0xE7 = 3 chars too?
+            // 0x73 = 2 chars
+            // 0xF9 = 1 char
+        } else {
+            if (string.length > 8) {
+                console.log(stringIndex, new Buffer(string).toString('ascii'));
+            }
+            string.length = 0;
+        }
+    }
+}
+
+function printStrings(fileName) {
+    const data = fs.readFileSync(fileName);
+    extractStrings(data);
+}
+
 exports.parseHeader = parseHeader;
 exports.unpack = unpack;
+exports.extractStrings = extractStrings;
+exports.printStrings = printStrings;
