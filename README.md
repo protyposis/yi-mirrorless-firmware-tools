@@ -74,7 +74,7 @@ Section 2 / IPL
 
 ### Next steps
 
- * Identify the exact format of the first section / decompress
+ * Identify the exact format of the first section / fix decompression
  * Identify partition table format and decode
  * Disassemble first section
  * Change something simple (e.g. the 500 shot limit in the beta firmware), repack FW file and upload to camera
