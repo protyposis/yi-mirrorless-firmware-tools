@@ -5,7 +5,9 @@ A firmware unpacker for YI M1 firmware files. Currently does not much more than 
 
 Requirements: Node.js & npm
  
-Usage: `npm run unpack /path/to/firmware.bin`
+Usage: 
+ 1. `npm install`
+ 1. `npm run unpack /path/to/firmware.bin`
 
 The output will be a number of files (usually 4) named `firmware.bin.{sectionNumber}.{sectionId}`.
 
