@@ -165,6 +165,10 @@ function decompress(buffer) {
       return S(value.toString(2)).padLeft(bits, '0');
     };
 
+    const toHexString = (value, bytes) => {
+        return S(value.toString(16)).padLeft(bytes * 2, '0');
+    };
+
     while (bufferByteIndex < buffer.length && bufferByteIndex < 100) {
         // Read the flag byte, whose bits are flags that tell which bytes are to be copied directly, and which bytes
         // are lookup information.
@@ -174,7 +178,7 @@ function decompress(buffer) {
 
         const flagsByteBinaryString = toBitString(flagByte, 8);
         const flagsString = flags.map((flag) => flag ? 'C' : 'L').reduce((a, b) => a + b);
-        console.log(`${bufferByteIndex - 1} flag: 0x${flagByte.toString(16)}/${flagsByteBinaryString} => ${flagsString}`
+        console.log(`${bufferByteIndex - 1} flag: 0x${toHexString(flagByte, 1)}/${flagsByteBinaryString} => ${flagsString}`
             + (flagByte === 0xFF ? ' !!!!!' : ''));
 
         for (let copyByte of flags) {
@@ -186,7 +190,7 @@ function decompress(buffer) {
                 // Read lookup data bytes (2 bytes)
                 const lookup = readNextByte() << 8 | readNextByte();
                 // TODO decode lookup format
-                console.log(`${bufferByteIndex - 2} lookup: 0x${lookup.toString(16)}/${toBitString(lookup, 16)}`);
+                console.log(`${bufferByteIndex - 2} lookup: 0x${toHexString(lookup, 2)}/${toBitString(lookup, 16)}`);
             }
         }
     }
