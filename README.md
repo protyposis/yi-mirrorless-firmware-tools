@@ -8,6 +8,7 @@ Requirements: Node.js & npm
 Usage: 
  1. `npm install`
  1. `npm run unpack /path/to/firmware.bin`
+ 1. `npm run decompress /path/to/firmware.bin.0` (output from `unpack`)
 
 The output will be a number of files (usually 4) named `firmware.bin.{sectionNumber}.{sectionId}`.
 
