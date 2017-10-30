@@ -173,6 +173,29 @@ class RingBuffer {
             this.buffer.slice(0, this.bufferIndex),
         ]);
     }
+
+    find(byteArray) {
+        const check = (x) => {
+            for (let y = 1; y < byteArray.length; y++) {
+                if (this.buffer.readUInt8(x + y) !== byteArray[y]) {
+                    return false;
+                }
+            }
+
+            return true;
+        };
+
+        for (let x = 0; x < this.buffer.length; x++) {
+            // Check the first value and if it matched, check all remaining ones
+            if (this.buffer.readUInt8(x) === byteArray[0] && check(x)) {
+                const offset = (this.buffer.length + x - this.bufferIndex) % this.buffer.length;
+                // Return "external" offset (as used by readUInt8) and the actual internal offset
+                return [offset, x];
+            }
+        }
+
+        return [-1, -1];
+    }
 }
 
 /**
@@ -221,6 +244,20 @@ function decompress(buffer) {
         return S(value.toString(16)).padLeft(bytes * 2, '0').toString().toUpperCase();
     };
 
+    // Positions in the source file at which lookup bytes are stored, and their expected lookup result
+    const analysisEntries = {
+        3801324: 'ing',
+        3801424: 'text/j',
+        3801487: 'on\0',
+        3801499: '\0video/',
+        3807679: '2345',
+        3807750: 'stuv',
+        6769554: 'rst',
+        6769842: 'uary',
+        7364461: 'ata',
+    };
+    const analysisEntryKeys = Object.keys(analysisEntries).map((key) => Number(key));
+
     while (bufferByteIndex < buffer.length - 2) {
         // Read the flag byte, whose bits are flags that tell which bytes are to be copied directly, and which bytes
         // are lookup information.
@@ -264,6 +301,23 @@ function decompress(buffer) {
                 for (let x = 0; x < lookupLength; x++) {
                     let bufferByte = lookupBuffer.readUInt8(lookupIndex + x);
                     lookupBytes.push(bufferByte);
+                }
+
+                // Analysis: check lookup expected vs. actual
+                // This is just here for analytical purposes, to help find out what's wrong with the lookup buffer
+                const byteIndex = bufferByteIndex - 2;
+                const key = byteIndex + 0x2000;
+                if (analysisEntryKeys.includes(key)) {
+                    const expectedValue = analysisEntries[key]; // What we expect to read from the lookup buffer
+                    const expectedValueArray = expectedValue.split('').map((char) => char.charCodeAt(0)); // the same as value array for the find operation
+                    const read = lookupBytes.map((byte) => String.fromCharCode(byte)).reduce((a, b) => a + b); // What we actually read from the lookup buffer
+                    const find = lookupBuffer.find(expectedValueArray); // Find the expected values in the buffer
+                    console.log(`should be "${expectedValue}" but got "${read}"`);
+                    console.log('expected index', lookupIndex);
+                    console.log('actual index', find, expectedValueArray);
+                    if (find[0] > -1) {
+                        console.log(key + ' offset', find[0] - lookupIndex, find[1] - lookupIndex);
+                    }
                 }
 
                 // Write bytes into output and lookup buffer
