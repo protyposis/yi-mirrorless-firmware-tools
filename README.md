@@ -16,7 +16,7 @@ Firmware files consist of 4 sections.
 
 | Section Number | Section Id | Size | Description |
 | -------------- | ---------- | ---- | ----------- |
-| 0              | *none*     | variable, ~7 MB | Most probably the actual firmware code. Seems to be lightly scrambled or infused with some kind of checksum every 8 bytes. Could not make much sense of it yet. Can easily be seen in string values, e.g. `Copyr.ight 200.9 Murata. Manufac.turing C.o.,Ltd` or `text./html.Spl.ain.Sx.Ucs.s.applic.ation/js.on([avasc.ript.ima.ge/jpeg` (this intermediate byte is always 0xFF when 8 more ASCII chars follow). |
+| 0              | *none*     | variable, ~7 MB | Most probably the actual firmware code. Contains two sections with 0x1000 byte length each, followed by compressed data (compressed with some kind of LZSS algorithm). |
 | 1              | ND1        | variable, ~4 MB | Offset 0x1600000. Memory image that contains resources like bitmaps, fonts, and texts in different languages |
 | 2              | IPL        | 128 kB, 0x20000 byte | Bootloader (Initial Program Loader) |
 | 3              | PTBL       | 4 kB, 0x1000 byte | Partition table, unknown format |
@@ -72,7 +72,7 @@ Section 2 / IPL
 
 ### Next steps
 
- * Identify the exact format of the first section / descramble
+ * Identify the exact format of the first section / decompress
  * Identify partition table format and decode
  * Disassemble first section
  * Change something simple (e.g. the 500 shot limit in the beta firmware), repack FW file and upload to camera
