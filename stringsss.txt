@@ -1,0 +1,7 @@
+
+> yi-mirrorless-firmware-tools@0.1.0 unpack C:\Users\Mario\Desktop\Projects\yi-mirrorless-firmware-tools
+> node index.js "c:\Users\Mario\Downloads\firmware.bin.0"
+
+[ 'C:\\Program Files\\nodejs\\node.exe',
+  'C:\\Users\\Mario\\Desktop\\Projects\\yi-mirrorless-firmware-tools\\index.js',
+  'c:\\Users\\Mario\\Downloads\\firmware.bin.0' ]

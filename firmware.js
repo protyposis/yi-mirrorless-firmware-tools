@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const S = require('string');
 
 const FW_SECTION_HEADER_LENGTH = 0x100;
 
@@ -137,5 +138,72 @@ function unpack(fileName, targetDirectory) {
     }
 }
 
+/**
+ * Decompresses compressed data in section 0 of the firmware.
+ * @param buffer
+ * @returns {Buffer}
+ */
+function decompress(buffer) {
+    let bufferByteIndex = 0;
+
+    const readNextByte = () => {
+        return buffer.readUInt8(bufferByteIndex++);
+    };
+
+    const decodeFlagByte = (flagByte) => {
+        const flags = [];
+
+        for (let bitIndex = 0; bitIndex < 8; bitIndex++) {
+            const copyByte = (flagByte >> bitIndex) & 1 === 1;
+            flags.push(copyByte);
+        }
+
+        return flags;
+    };
+
+    const toBitString = (value, bits) => {
+      return S(value.toString(2)).padLeft(bits, '0');
+    };
+
+    while (bufferByteIndex < buffer.length && bufferByteIndex < 100) {
+        // Read the flag byte, whose bits are flags that tell which bytes are to be copied directly, and which bytes
+        // are lookup information.
+        const flagByte = readNextByte();
+        // Parse the flag byte into a boolean flag array
+        const flags = decodeFlagByte(flagByte);
+
+        const flagsByteBinaryString = toBitString(flagByte, 8);
+        const flagsString = flags.map((flag) => flag ? 'C' : 'L').reduce((a, b) => a + b);
+        console.log(`${bufferByteIndex - 1} flag: 0x${flagByte.toString(16)}/${flagsByteBinaryString} => ${flagsString}`
+            + (flagByte === 0xFF ? ' !!!!!' : ''));
+
+        for (let copyByte of flags) {
+            if (copyByte) {
+                // Just copy the byte into the output
+                const byte = readNextByte();
+                console.log(`${bufferByteIndex - 1} copy: 0x${byte.toString(16)}`);
+            } else {
+                // Read lookup data bytes (2 bytes)
+                const lookup = readNextByte() << 8 | readNextByte();
+                // TODO decode lookup format
+                console.log(`${bufferByteIndex - 2} lookup: 0x${lookup.toString(16)}/${toBitString(lookup, 16)}`);
+            }
+        }
+    }
+
+    // TODO return decompressed data
+    return Buffer.alloc(0);
+}
+
+function decompressFile(fileName) {
+    const data = fs.readFileSync(fileName);
+
+    // Skip the two uncompressed 0x1000 byte sections
+    const compressedData = data.slice(0x2000);
+
+    const decompressData = decompress(compressedData);
+}
+
 exports.parseHeader = parseHeader;
 exports.unpack = unpack;
+exports.decompressFile = decompressFile;
