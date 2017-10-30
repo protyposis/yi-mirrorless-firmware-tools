@@ -287,7 +287,17 @@ function decompressFile(fileName, targetDirectory) {
     const decompressData = decompress(compressedData);
 
     const targetFileName = path.basename(fileName) + `.decompressed`;
-    fs.writeFileSync(path.join(targetDirectory, targetFileName), decompressData);
+    const targetFileNameFull = path.join(targetDirectory, targetFileName);
+    fs.writeFileSync(targetFileNameFull, decompressData);
+
+    const stats = {
+        inputSize: compressedData.length,
+        outputSize: decompressData.length,
+        compressionRate: 1 / decompressData.length * compressedData.length,
+        outputFile: targetFileNameFull,
+    };
+
+    console.log(`Decompression finished (${JSON.stringify(stats)})`);
 }
 
 exports.parseHeader = parseHeader;
