@@ -138,16 +138,68 @@ function unpack(fileName, targetDirectory) {
     }
 }
 
+class RingBuffer {
+    constructor(size) {
+        this.buffer = Buffer.alloc(size);
+        this.bufferIndex = 0;
+    }
+
+    get length() {
+        return this.buffer.length;
+    }
+
+    get innerBuffer() {
+        return this.buffer;
+    }
+
+    readUInt8(offset) {
+        const readOffset = (this.bufferIndex + offset) % this.buffer.length;
+        return this.buffer.readUInt8(readOffset);
+    }
+
+    appendUInt8(value) {
+        this.buffer.writeUInt8(value, this.bufferIndex);
+        this.bufferIndex = ++this.bufferIndex % this.buffer.length;
+    }
+
+    toString(encoding) {
+        return this.buffer.toString(encoding, this.bufferIndex, this.buffer.length)
+            + this.buffer.toString(encoding, 0, this.bufferIndex);
+    }
+
+    getSequentialBuffer() {
+        return Buffer.concat([
+            this.buffer.slice(this.bufferIndex, this.buffer.length),
+            this.buffer.slice(0, this.bufferIndex),
+        ]);
+    }
+}
+
 /**
  * Decompresses compressed data in section 0 of the firmware.
  * @param buffer
  * @returns {Buffer}
  */
 function decompress(buffer) {
+    const THRESHOLD = 3;
+    const BUFFER_SIZE = 0x1000;
+    const VERBOSE = false;
+
     let bufferByteIndex = 0;
+    const lookupBuffer = new RingBuffer(BUFFER_SIZE);
+    const outputBuffer = Buffer.alloc(buffer.length * 10); // the compression os probably way less effective so lets just hope this size is enough (else we have to implement dynamic resizing)
+    let outputBufferByteIndex = 0;
 
     const readNextByte = () => {
         return buffer.readUInt8(bufferByteIndex++);
+    };
+
+    const writeNextByte = (value) => {
+        if (outputBufferByteIndex === outputBuffer.length) {
+            throw 'Output buffer is full, cannot write more data';
+        }
+
+        outputBuffer.writeUInt8(value, outputBufferByteIndex++);
     };
 
     const decodeFlagByte = (flagByte) => {
@@ -162,50 +214,80 @@ function decompress(buffer) {
     };
 
     const toBitString = (value, bits) => {
-      return S(value.toString(2)).padLeft(bits, '0');
+        return S(value.toString(2)).padLeft(bits, '0');
     };
 
     const toHexString = (value, bytes) => {
-        return S(value.toString(16)).padLeft(bytes * 2, '0');
+        return S(value.toString(16)).padLeft(bytes * 2, '0').toString().toUpperCase();
     };
 
-    while (bufferByteIndex < buffer.length && bufferByteIndex < 100) {
+    while (bufferByteIndex < buffer.length - 2) {
         // Read the flag byte, whose bits are flags that tell which bytes are to be copied directly, and which bytes
         // are lookup information.
         const flagByte = readNextByte();
         // Parse the flag byte into a boolean flag array
         const flags = decodeFlagByte(flagByte);
 
-        const flagsByteBinaryString = toBitString(flagByte, 8);
-        const flagsString = flags.map((flag) => flag ? 'C' : 'L').reduce((a, b) => a + b);
-        console.log(`${bufferByteIndex - 1} flag: 0x${toHexString(flagByte, 1)}/${flagsByteBinaryString} => ${flagsString}`
-            + (flagByte === 0xFF ? ' !!!!!' : ''));
+        if (VERBOSE) {
+            const flagsByteBinaryString = toBitString(flagByte, 8);
+            const flagsString = flags.map((flag) => flag ? 'C' : 'L').reduce((a, b) => a + b);
+            console.log(`${bufferByteIndex - 1} flag: 0x${toHexString(flagByte, 1)}/${flagsByteBinaryString} => ${flagsString}`
+                + (flagByte === 0xFF ? ' !!!!!' : ''));
+        }
 
         for (let copyByte of flags) {
             if (copyByte) {
                 // Just copy the byte into the output
                 const byte = readNextByte();
-                console.log(`${bufferByteIndex - 1} copy: 0x${byte.toString(16)}`);
+
+                if (VERBOSE) {
+                    console.log(`${bufferByteIndex - 1} copy: 0x${byte.toString(16)}`);
+                }
+
+                // Write byte into output and lookup buffer
+                writeNextByte(byte);
+                lookupBuffer.appendUInt8(byte);
             } else {
                 // Read lookup data bytes (2 bytes)
                 const lookup = readNextByte() << 8 | readNextByte();
-                // TODO decode lookup format
-                console.log(`${bufferByteIndex - 2} lookup: 0x${toHexString(lookup, 2)}/${toBitString(lookup, 16)}`);
+
+                const lookupIndex = lookup >> 4;
+                const lookupLength = (lookup & 0x000F) + THRESHOLD;
+
+                if (VERBOSE) {
+                    console.log(`${bufferByteIndex - 2} lookup: 0x${toHexString(lookup, 2)}/${toBitString(lookup, 16)} => ${lookupLength}@${lookupIndex}`);
+                }
+
+                // Read bytes from lookup buffer
+                // TODO find out why the lookupIndex does not map correctly to the lookupBuffer (and has an inconsistent offset)
+                const lookupBytes = [];
+                for (let x = 0; x < lookupLength; x++) {
+                    let bufferByte = lookupBuffer.readUInt8(lookupIndex + x);
+                    lookupBytes.push(bufferByte);
+                }
+
+                // Write bytes into output and lookup buffer
+                lookupBytes.forEach((byte) => {
+                    lookupBuffer.appendUInt8(byte);
+                    writeNextByte(byte);
+                });
             }
         }
     }
 
-    // TODO return decompressed data
-    return Buffer.alloc(0);
+    return outputBuffer.slice(0, outputBufferByteIndex);
 }
 
-function decompressFile(fileName) {
+function decompressFile(fileName, targetDirectory) {
     const data = fs.readFileSync(fileName);
 
     // Skip the two uncompressed 0x1000 byte sections
     const compressedData = data.slice(0x2000);
 
     const decompressData = decompress(compressedData);
+
+    const targetFileName = path.basename(fileName) + `.decompressed`;
+    fs.writeFileSync(path.join(targetDirectory, targetFileName), decompressData);
 }
 
 exports.parseHeader = parseHeader;

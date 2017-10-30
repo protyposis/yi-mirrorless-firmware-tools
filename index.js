@@ -22,7 +22,7 @@ try {
             break;
 
         case 'decompress':
-            firmware.decompressFile(inputFileName);
+            firmware.decompressFile(inputFileName, outputDirectoryName);
             break;
 
         default:
