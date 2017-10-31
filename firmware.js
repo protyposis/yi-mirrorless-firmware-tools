@@ -317,6 +317,8 @@ function decompress(buffer) {
                 // Read lookup data bytes (2 bytes)
                 const lookup = readNextByte() << 8 | readNextByte();
 
+                // TODO find out the actual bit sizes for index and length (and thus the lookup buffer size)
+                // length is at least 3 by the lookup bytes I've seen
                 const lookupIndex = lookup >> 4;
                 const lookupLength = (lookup & 0x000F) + THRESHOLD;
 
