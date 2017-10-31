@@ -7,6 +7,7 @@ Requirements: Node.js & npm
  
 Usage: 
  1. `npm install`
+ 1. Download [firmware](https://www.yitechnology.com/yi-m1-mirrorless-camera-firmware)
  1. `npm run unpack /path/to/firmware.bin`
  1. `npm run decompress /path/to/firmware.bin.0` (output from `unpack`)
 
