@@ -330,6 +330,7 @@ function decompress(buffer) {
                 // TODO find out why the lookupIndex does not map correctly to the lookupBuffer (and has an inconsistent offset)
                 const lookupBytes = [];
                 for (let x = 0; x < lookupLength; x++) {
+                    // TODO find out the correct lookup index calculation (e.g. BUFFER_SIZE - lookupIndex?)
                     let bufferByte = lookupBuffer.readUInt8(lookupIndex + x);
                     lookupBytes.push(bufferByte);
                 }
