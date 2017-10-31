@@ -244,8 +244,14 @@ function decompress(buffer) {
         return S(value.toString(16)).padLeft(bytes * 2, '0').toString().toUpperCase();
     };
 
-    // Positions in the source file at which lookup bytes are stored, and their expected lookup result
+    // Positions in the source file (incl 0x2000 header) at which lookup bytes are stored, and their expected lookup result
+    // These are for firmware 2.9.1
     const analysisEntries = {
+        0096720: '  P', // ? not sure about spaces
+        0096738: 'OR ',  // ? not sure about space
+        0096750: 'FIRM', // ?
+        0096818: 'car',
+        1455271: 'T_R',
         3801324: 'ing',
         3801424: 'text/j',
         3801487: 'on\0',
