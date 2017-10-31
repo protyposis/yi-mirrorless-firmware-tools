@@ -139,8 +139,14 @@ function unpack(fileName, targetDirectory) {
 }
 
 class RingBuffer {
-    constructor(size) {
-        this.buffer = Buffer.alloc(size);
+    constructor(bufferOrSize) {
+        if (typeof bufferOrSize === 'number') {
+            this.buffer = Buffer.alloc(bufferOrSize);
+        } else if (bufferOrSize instanceof Buffer) {
+            this.buffer = bufferOrSize;
+        } else {
+            throw 'Unsupported input: ' + bufferOrSize;
+        }
         this.bufferIndex = 0;
     }
 
@@ -150,6 +156,10 @@ class RingBuffer {
 
     get innerBuffer() {
         return this.buffer;
+    }
+
+    get index() {
+        return this.bufferIndex;
     }
 
     readUInt8(offset) {
