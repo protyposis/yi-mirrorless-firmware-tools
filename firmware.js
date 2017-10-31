@@ -342,6 +342,7 @@ function decompressFile(fileName, targetDirectory) {
     const data = fs.readFileSync(fileName);
 
     // Skip the two uncompressed 0x1000 byte sections
+    // Or use them as initial data for the LZSS lookup buffer?
     const compressedData = data.slice(0x2000);
 
     const decompressData = decompress(compressedData);
