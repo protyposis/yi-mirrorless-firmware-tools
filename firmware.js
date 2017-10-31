@@ -262,22 +262,28 @@ function decompress(buffer) {
     };
 
     // Positions in the source file (incl 0x2000 header) at which lookup bytes are stored, and their expected lookup result
-    // These are for firmware 2.9.1
+    // These are for firmware 3.0-int
     const analysisEntries = {
-        0096720: '  P', // ? not sure about spaces
-        0096738: 'OR ',  // ? not sure about space
-        0096750: 'FIRM', // ?
-        0096818: 'car',
-        1455271: 'T_R',
-        3801324: 'ing',
-        3801424: 'text/j',
-        3801487: 'on\0',
-        3801499: '\0video/',
-        3807679: '2345',
-        3807750: 'stuv',
-        6769554: 'rst',
-        6769842: 'uary',
-        7364461: 'ata',
+        0096720: '  P', // PARTITION ? not sure about spaces
+        0096738: 'OR ',  // ERROR ? not sure about space
+        0096750: 'FIRM', // FIRMWARE  UPDATE ?
+        0096818: 'car', // SDcard
+        1456397: 'T_R', // MLRA_NOT_RESOLVABLE
+        3803472: 'text/j', // text/javascript
+        3803535: 'on\0', // vnd.microsoft.icon
+        3803547: '\0video/', // video/quicktime
+        3809723: '2345', // 0123456789
+        3809793: 'stuv', // mnopqrstuvwxyz
+        6773982: '00 ', // <title>400 Bad Request
+        6773999: 'title>', // 400 Bad Request</title> <-- this has a lookup only a few bytes back, why is the index still so high?
+        6774003: 'head><', // </title></head> <-- this has a lookup only a few bytes back, why is the index still so high?
+        6774046: 'equest', // Your browser sent a request that
+        6774052: 't th', // a request that this server
+        6774057: ' se', // that this server could
+        6774061: 'er ', // this server could not
+        6774620: 'rst', // mnopqrstuvwxyz
+        6774908: 'uary\0', // February
+        7368583: 'ata', // 2009 Murata Manufacturing
     };
     const analysisEntryKeys = Object.keys(analysisEntries).map((key) => Number(key));
 
