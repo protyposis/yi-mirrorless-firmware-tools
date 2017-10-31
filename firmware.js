@@ -327,13 +327,14 @@ function decompress(buffer) {
                     const expectedValue = analysisEntries[key]; // What we expect to read from the lookup buffer
                     const expectedValueArray = expectedValue.split('').map((char) => char.charCodeAt(0)); // the same as value array for the find operation
                     const read = lookupBytes.map((byte) => String.fromCharCode(byte)).reduce((a, b) => a + b); // What we actually read from the lookup buffer
+                    const match = expectedValueArray.length === lookupBytes.length && expectedValueArray.every((v, i) => v === lookupBytes[i]);
                     const find = lookupBuffer.find(expectedValueArray); // Find the expected values in the buffer
-                    console.log(`should be "${expectedValue}" but got "${read}"`);
-                    console.log('expected index', lookupIndex);
-                    console.log('actual index', find, expectedValueArray);
+                    console.log(`${match ? 'SUCCESS' : 'FAIL'}@${key}: expected "${expectedValue}" but got "${read}"`);
+                    console.log(`      expected index ${lookupIndex}, found index ${find}`);
                     if (find[0] > -1) {
-                        console.log(key + ' offset', find[0] - lookupIndex, find[1] - lookupIndex);
+                        console.log('      offset', find[0] - lookupIndex, find[1] - lookupIndex);
                     }
+                    //fs.writeFileSync('lookupBuffer' + key, lookupBuffer.getSequentialBuffer());
                 }
 
                 // Write bytes into output and lookup buffer
