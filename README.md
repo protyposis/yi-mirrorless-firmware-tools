@@ -81,6 +81,11 @@ Section 2 / IPL
  * Disassemble first section
  * Change something simple (e.g. the 500 shot limit in the beta firmware), repack FW file and upload to camera
 
+Other Cameras
+-------------
+
+The Fujifilm X-A10 camera uses the same [firmware](http://www.fujifilm.com/support/digital_cameras/software/firmware/x/xa10/download.html) format and can be unpacked with this tool as well. The compression scheme of the first section is also similar. In comparison to the M1 it contains an additional fifth section called "A9262" that contains additional code. Also interesting is that the model ID is very similar (M1: C59Y1, X-A10: C5932).
+
 FAQ
 ---
 
