@@ -210,7 +210,7 @@ function decompress(buffer) {
 
     let bufferByteIndex = 0;
     const lookupBuffer = new RingBuffer(BUFFER_SIZE);
-    const outputBuffer = Buffer.alloc(buffer.length * 10); // the compression os probably way less effective so lets just hope this size is enough (else we have to implement dynamic resizing)
+    const outputBuffer = Buffer.alloc(buffer.length * 10); // the compression is probably way less effective so lets just hope this size is enough (else we have to implement dynamic resizing)
     let outputBufferByteIndex = 0;
 
     const readNextByte = () => {
