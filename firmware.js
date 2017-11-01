@@ -221,12 +221,14 @@ class RingBuffer {
  * @returns {Buffer}
  */
 function decompress(buffer) {
-    const THRESHOLD = 3;
-    const BUFFER_SIZE = 0x1000;
+    const LOOKUP_LENGTH_BITS = 4;
+    const LOOKUP_LENGTH_BITS_MASK = Math.pow(2, LOOKUP_LENGTH_BITS) - 1;
+    const LOOKUP_LENGTH_THRESHOLD = 3;
+    const LOOKUP_BUFFER_SIZE = 0x1000;
     const VERBOSE = false;
 
     let bufferByteIndex = 0;
-    const lookupBuffer = new RingBuffer(BUFFER_SIZE);
+    const lookupBuffer = new RingBuffer(LOOKUP_BUFFER_SIZE);
     const outputBuffer = Buffer.alloc(buffer.length * 10); // the compression is probably way less effective so lets just hope this size is enough (else we have to implement dynamic resizing)
     let outputBufferByteIndex = 0;
 
@@ -319,8 +321,8 @@ function decompress(buffer) {
 
                 // TODO find out the actual bit sizes for index and length (and thus the lookup buffer size)
                 // length is at least 3 by the lookup bytes I've seen
-                const lookupIndex = lookup >> 4;
-                const lookupLength = (lookup & 0x000F) + THRESHOLD;
+                const lookupIndex = lookup >> LOOKUP_LENGTH_BITS;
+                const lookupLength = (lookup & LOOKUP_LENGTH_BITS_MASK) + LOOKUP_LENGTH_THRESHOLD;
 
                 if (VERBOSE) {
                     console.log(`${bufferByteIndex - 2} lookup: 0x${toHexString(lookup, 2)}/${toBitString(lookup, 16)} => ${lookupLength}@${lookupIndex}`);
