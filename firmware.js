@@ -146,7 +146,7 @@ function unpack(fileName, targetDirectory) {
 }
 
 class RingBuffer {
-    constructor(bufferOrSize) {
+    constructor(bufferOrSize, initialIndex = 0) {
         if (typeof bufferOrSize === 'number') {
             this.buffer = Buffer.alloc(bufferOrSize);
         } else if (bufferOrSize instanceof Buffer) {
@@ -154,7 +154,7 @@ class RingBuffer {
         } else {
             throw 'Unsupported input: ' + bufferOrSize;
         }
-        this.bufferIndex = 0;
+        this.bufferIndex = initialIndex;
     }
 
     get length() {
@@ -224,7 +224,7 @@ function decompress(buffer) {
     const VERBOSE = false;
 
     let bufferByteIndex = 0;
-    const lookupBuffer = new RingBuffer(LOOKUP_BUFFER_SIZE);
+    const lookupBuffer = new RingBuffer(LOOKUP_BUFFER_SIZE, 709);
     const outputBuffer = Buffer.alloc(buffer.length * 10); // the compression is probably way less effective so lets just hope this size is enough (else we have to implement dynamic resizing)
     let outputBufferByteIndex = 0;
 
