@@ -262,7 +262,8 @@ function decompress(buffer) {
     const analysisEntries = {
         0096720: '  P', // PARTITION ? not sure about spaces
         0096738: 'OR ',  // ERROR ? not sure about space
-        0096750: 'FIRM', // FIRMWARE  UPDATE ?
+        0096748: 'DATE ',  // UPDATE ? not sure about space
+        0096750: 'FIRM', // FIRMWARE  UPDATE ? this is actually longer and goes like this "??ERROR?FIRM"
         0096818: 'car', // SDcard
         1364501: 'sta', // /btstack/
         1364503: 'ck/', // /btstack/
