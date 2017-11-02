@@ -314,12 +314,15 @@ function decompress(buffer) {
                 lookupBuffer.appendUInt8(byte);
             } else {
                 // Read lookup data bytes (2 bytes)
-                const lookup = readNextByte() << 8 | readNextByte();
+                const lookup1 = readNextByte();
+                const lookup2 = readNextByte();
+                const lookup = lookup1 << 8 | lookup2;
 
                 // TODO find out the actual bit sizes for index and length (and thus the lookup buffer size)
                 // length is at least 3 by the lookup bytes I've seen
-                const lookupIndex = lookup >> 4;
-                const lookupLength = (lookup & 0x0F) + 3;
+                // The bytes are ordered big endian
+                const lookupIndex = lookup1 | ((lookup2 & 0xF0) << 4);
+                const lookupLength = (lookup2 & 0x0F) + 3;
 
                 if (VERBOSE) {
                     console.log(`${bufferByteIndex - 2} lookup: 0x${toHexString(lookup, 2)}/${toBitString(lookup, 16)} => ${lookupLength}@${lookupIndex}`);
