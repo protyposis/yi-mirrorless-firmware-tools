@@ -170,8 +170,7 @@ class RingBuffer {
     }
 
     readUInt8(offset) {
-        const readOffset = (this.bufferIndex + offset) % this.buffer.length;
-        return this.buffer.readUInt8(readOffset);
+        return this.buffer.readUInt8(offset % this.buffer.length);
     }
 
     appendUInt8(value) {
