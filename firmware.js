@@ -204,13 +204,11 @@ class RingBuffer {
         for (let x = 0; x < this.buffer.length; x++) {
             // Check the first value and if it matched, check all remaining ones
             if (this.buffer.readUInt8(x) === byteArray[0] && check(x)) {
-                const offset = (this.buffer.length + x - this.bufferIndex) % this.buffer.length;
-                // Return "external" offset (as used by readUInt8) and the actual internal offset
-                return [offset, x];
+                return x;
             }
         }
 
-        return [-1, -1];
+        return -1;
     }
 }
 
@@ -345,13 +343,15 @@ function decompress(buffer) {
                     const expectedValueArray = expectedValue.split('').map((char) => char.charCodeAt(0)); // the same as value array for the find operation
                     const read = lookupBytes.map((byte) => String.fromCharCode(byte)).reduce((a, b) => a + b); // What we actually read from the lookup buffer
                     const match = expectedValueArray.length === lookupBytes.length && expectedValueArray.every((v, i) => v === lookupBytes[i]);
-                    const find = lookupBuffer.find(expectedValueArray); // Find the expected values in the buffer
-                    console.log(`${match ? 'SUCCESS' : 'FAIL'}@${key}: expected "${expectedValue}" but got "${read}"`);
-                    console.log(`      expected index ${lookupIndex}, found index ${find}`);
-                    if (find[0] > -1) {
-                        console.log('      offset', find[0] - lookupIndex, find[1] - lookupIndex);
+                    console.log(`${match ? 'SUCCESS' : 'FAIL'}@${key}: expected "${expectedValue}", got "${read}"`);
+                    if (!match) {
+                        const find = lookupBuffer.find(expectedValueArray); // Find the expected values in the buffer
+                        console.log(`      expected index ${lookupIndex}, found index ${find}`);
+                        if (find > -1) {
+                            console.log('      offset', find - lookupIndex);
+                        }
+                        //fs.writeFileSync('lookupBuffer' + key, lookupBuffer.innerBuffer);
                     }
-                    //fs.writeFileSync('lookupBuffer' + key, lookupBuffer.getSequentialBuffer());
                 }
 
                 // Write bytes into output and lookup buffer
