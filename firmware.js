@@ -322,7 +322,9 @@ function decompress(buffer) {
                 const lookupLength = (lookup2 & 0x0F) + 3;
 
                 if (VERBOSE) {
-                    console.log(`${bufferByteIndex - 2} lookup: 0x${toHexString(lookup, 2)}/${toBitString(lookup, 16)} => ${lookupLength}@${lookupIndex}`);
+                    console.log(`${bufferByteIndex - 2} lookup: 0x${toHexString(lookup, 2)}/${toBitString(lookup, 16)}`
+                        + ` => ${toBitString(lookupIndex, 12)} ${toBitString(lookupLength - 3, 4)}`
+                        + ` => ${lookupLength}@${lookupIndex}`);
                 }
 
                 // Read bytes from lookup buffer
