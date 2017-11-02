@@ -265,7 +265,7 @@ function decompress(buffer) {
         0096750: 'FIRM', // FIRMWARE  UPDATE ?
         0096818: 'car', // SDcard
         1456397: 'T_R', // MLRA_NOT_RESOLVABLE
-        3803472: 'text/j', // text/javascript
+        3803472: '\0application/j', // text/javascript <-- evidence that the lookup length is at least 4 bits!
         3803535: 'on\0', // vnd.microsoft.icon
         3803547: '\0video/', // video/quicktime
         3809723: '2345', // 0123456789
@@ -351,6 +351,7 @@ function decompress(buffer) {
                             console.log('      offset', find - lookupIndex);
                         }
                         //fs.writeFileSync('lookupBuffer' + key, lookupBuffer.innerBuffer);
+                        console.log(`       ${bufferByteIndex - 2} lookup: 0x${toHexString(lookup, 2)}/${toBitString(lookup, 16)} => ${lookupLength}@${lookupIndex}`);
                     }
                 }
 
