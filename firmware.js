@@ -271,8 +271,8 @@ function decompress(buffer) {
         3809723: '2345', // 0123456789
         3809793: 'stuv', // mnopqrstuvwxyz
         6773982: '00 ', // <title>400 Bad Request
-        6773999: 'title>', // 400 Bad Request</title> <-- this has a lookup only a few bytes back, why is the index still so high?
-        6774003: 'head><', // </title></head> <-- this has a lookup only a few bytes back, why is the index still so high?
+        6773999: 'title>', // 400 Bad Request</title>
+        6774003: 'head><', // </title></head>
         6774046: 'equest', // Your browser sent a request that
         6774052: 't th', // a request that this server
         6774057: ' se', // that this server could
