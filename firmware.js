@@ -264,6 +264,16 @@ function decompress(buffer) {
         0096738: 'OR ',  // ERROR ? not sure about space
         0096750: 'FIRM', // FIRMWARE  UPDATE ?
         0096818: 'car', // SDcard
+        1364501: 'sta', // /btstack/
+        1364503: 'ck/', // /btstack/
+        1364510: 'sdk/', // /bluesdk/
+        1364512: 'stack/', // bluesdk/stack/me/
+        1365111: 'ack', // ->callback != 0
+        1368363: 'aus', // ->pause ?? just a wild guess
+        1375274: 'Dev', // /EV9x_DevEnv/
+        1375286: 'ck/', // /btstack/
+        1375293: 'sdk/', // /bluesdk/
+        1375295: 'stack/', // /bluesdk/stack/me/
         1456397: 'T_R', // MLRA_NOT_RESOLVABLE
         3803472: '\0application/j', // text/javascript <-- evidence that the lookup length is at least 4 bits!
         3803535: 'on\0', // vnd.microsoft.icon
