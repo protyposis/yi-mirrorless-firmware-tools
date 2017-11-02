@@ -85,7 +85,7 @@ function unpack(fileName, targetDirectory) {
     // Skip leading spaces until the first header starts
     // (This is necessary for the Fujifilm X-A10 which has two leading space characters)
     fs.readSync(fd, headerBuffer, 0, headerBuffer.length, readPosition);
-    while(headerBuffer.readUInt8(readPosition) === 0x20) {
+    while (headerBuffer.readUInt8(readPosition) === 0x20) {
         readPosition++;
     }
 
