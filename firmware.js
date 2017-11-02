@@ -193,7 +193,7 @@ class RingBuffer {
     find(byteArray) {
         const check = (x) => {
             for (let y = 1; y < byteArray.length; y++) {
-                if (this.buffer.readUInt8(x + y) !== byteArray[y]) {
+                if (this.buffer.readUInt8((x + y) % this.buffer.length) !== byteArray[y]) {
                     return false;
                 }
             }
