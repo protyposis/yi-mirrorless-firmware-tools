@@ -399,6 +399,7 @@ function decompressFile(fileName, targetDirectory) {
         // TODO why the 18 byte offset?
         // TODO where are the sections and their lengths described?
         // All sections have trailing zero-bytes to fit a multiple of 2048 bytes
+        // These are the numbers for FW 3.0-int (2.0-int: 8192, 3158016, 6625280)
         [0x2000, 3127296 - 1, true, -18],
         [3127296, 7251968 - 1, true, -18],
         [7251968, data.length, true, -18],
