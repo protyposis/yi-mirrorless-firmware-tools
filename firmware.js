@@ -335,8 +335,7 @@ function decompress(buffer, sectionOffset, lookupBufferOffset) {
                 const lookup2 = readNextByte();
                 const lookup = lookup1 << 8 | lookup2;
 
-                // TODO find out the actual bit sizes for index and length (and thus the lookup buffer size)
-                // length is at least 3 by the lookup bytes I've seen
+                // length is 4 bytes, index 12 bytes
                 // The bytes are ordered big endian
                 const lookupIndex = lookup1 | ((lookup2 & 0xF0) << 4);
                 const lookupLength = (lookup2 & 0x0F) + 3;
@@ -348,10 +347,8 @@ function decompress(buffer, sectionOffset, lookupBufferOffset) {
                 }
 
                 // Read bytes from lookup buffer
-                // TODO find out why the lookupIndex does not map correctly to the lookupBuffer (and has an inconsistent offset)
                 const lookupBytes = [];
                 for (let x = 0; x < lookupLength; x++) {
-                    // TODO find out the correct lookup index calculation (e.g. BUFFER_SIZE - lookupIndex?)
                     let bufferByte = lookupBuffer.readUInt8(lookupIndex + x);
                     lookupBytes.push(bufferByte);
                 }
