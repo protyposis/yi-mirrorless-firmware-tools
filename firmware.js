@@ -397,6 +397,7 @@ function decompressFile(fileName, targetDirectory) {
         // start, end, compressed, lookup buffer offset (if compressed)
         [0, 0x2000, false, -1],
         // All compressed sections have a -18 buffer offset, seems like there is an 18 byte header
+        // All sections have trailing zero-bytes to fit a multiple of 2048 bytes
         [0x2000, 3127296 - 1, true, -18],
         [3127296, 7251968 - 1, true, -18],
         [7251968, data.length, true, -18],
