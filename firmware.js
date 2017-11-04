@@ -265,6 +265,9 @@ function decompress(buffer) {
         0096748: 'DATE ',  // UPDATE ? not sure about space
         0096750: 'FIRM', // FIRMWARE  UPDATE ? this is actually longer and goes like this "??ERROR?FIRM"
         0096818: 'car', // SDcard
+        103532: 'text/', // text/xml
+        1077305: 'ter', // Shutter Speed
+        1078447: 'mm F',
         1364501: 'sta', // /btstack/
         1364503: 'ck/', // /btstack/
         1364510: 'sdk/', // /bluesdk/
@@ -281,6 +284,7 @@ function decompress(buffer) {
         3803547: '\0video/', // video/quicktime
         3809723: '2345', // 0123456789
         3809793: 'stuv', // mnopqrstuvwxyz
+        5275024: 'ure', // Aperture
         6773982: '00 ', // <title>400 Bad Request
         6773999: 'title>', // 400 Bad Request</title>
         6774003: 'head><', // </title></head>
@@ -290,6 +294,9 @@ function decompress(buffer) {
         6774061: 'er ', // this server could not
         6774620: 'rst', // mnopqrstuvwxyz
         6774908: 'uary\0', // February
+        7158264: ' over', // has been overwritten
+        7219824: 'rel', // Wireless Controller
+        7367979: 'ode', // ??? incomplete
         7368583: 'ata', // 2009 Murata Manufacturing
     };
     const analysisEntryKeys = Object.keys(analysisEntries).map((key) => Number(key));
