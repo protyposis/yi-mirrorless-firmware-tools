@@ -1,3 +1,8 @@
+/*
+ * YI Mirrorless Firmware Tools
+ * Author: Mario Guggenberger <mg@protyposis.net>
+ * Licensed under the GPLv3
+ */
 'use strict';
 
 const path = require('path');
