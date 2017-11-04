@@ -217,12 +217,12 @@ class RingBuffer {
  * @param buffer
  * @returns {Buffer}
  */
-function decompress(buffer) {
+function decompress(buffer, sectionOffset, lookupBufferOffset) {
     const LOOKUP_BUFFER_SIZE = 0x1000;
     const VERBOSE = false;
 
     let bufferByteIndex = 0;
-    const lookupBuffer = new RingBuffer(LOOKUP_BUFFER_SIZE, 709);
+    const lookupBuffer = new RingBuffer(LOOKUP_BUFFER_SIZE, (LOOKUP_BUFFER_SIZE + lookupBufferOffset) % LOOKUP_BUFFER_SIZE);
     const outputBuffer = Buffer.alloc(buffer.length * 10); // the compression is probably way less effective so lets just hope this size is enough (else we have to implement dynamic resizing)
     let outputBufferByteIndex = 0;
 
@@ -303,7 +303,7 @@ function decompress(buffer) {
     };
     const analysisEntryKeys = Object.keys(analysisEntries).map((key) => Number(key));
 
-    while (bufferByteIndex < buffer.length - 2) {
+    while (bufferByteIndex < buffer.length - 16) { // TODO find out how we can detect the actual end
         // Read the flag byte, whose bits are flags that tell which bytes are to be copied directly, and which bytes
         // are lookup information.
         const flagByte = readNextByte();
@@ -359,7 +359,7 @@ function decompress(buffer) {
                 // Analysis: check lookup expected vs. actual
                 // This is just here for analytical purposes, to help find out what's wrong with the lookup buffer
                 const byteIndex = bufferByteIndex - 2;
-                const key = byteIndex + 0x2000;
+                const key = byteIndex + sectionOffset;
                 if (analysisEntryKeys.includes(key)) {
                     const expectedValue = analysisEntries[key]; // What we expect to read from the lookup buffer
                     const expectedValueArray = expectedValue.split('').map((char) => char.charCodeAt(0)); // the same as value array for the find operation
@@ -392,24 +392,35 @@ function decompress(buffer) {
 function decompressFile(fileName, targetDirectory) {
     const data = fs.readFileSync(fileName);
 
-    // Skip the two uncompressed 0x1000 byte sections
-    // Or use them as initial data for the LZSS lookup buffer?
-    const compressedData = data.slice(0x2000);
+    // The compressed firmware data is again split into multiple sections
+    const sections = [
+        // start, end, compressed, lookup buffer offset (if compressed)
+        [0, 0x2000, false, -1],
+        // All compressed sections have a -18 buffer offset, seems like there is an 18 byte header
+        [0x2000, 3127296 - 1, true, -18],
+        [3127296, 7251968 - 1, true, -18],
+        [7251968, data.length, true, -18],
+    ];
 
-    const decompressData = decompress(compressedData);
+    sections.forEach(([start, end, compressed, lookupBufferOffset]) => {
+        const sectionData = data.slice(start, end);
 
-    const targetFileName = path.basename(fileName) + `.decompressed`;
-    const targetFileNameFull = path.join(targetDirectory, targetFileName);
-    fs.writeFileSync(targetFileNameFull, decompressData);
+        if (compressed) {
+            const decompressedData = decompress(sectionData, start, lookupBufferOffset);
+            const targetFileName = path.basename(fileName) + `.decompressed.${start}`;
+            const targetFileNameFull = path.join(targetDirectory, targetFileName);
+            fs.writeFileSync(targetFileNameFull, decompressedData);
 
-    const stats = {
-        inputSize: compressedData.length,
-        outputSize: decompressData.length,
-        compressionRate: 1 / decompressData.length * compressedData.length,
-        outputFile: targetFileNameFull,
-    };
+            const stats = {
+                inputSize: sectionData.length,
+                outputSize: decompressedData.length,
+                compressionRate: 1 / decompressedData.length * sectionData.length,
+                outputFile: targetFileNameFull,
+            };
 
-    console.log(`Decompression finished (${JSON.stringify(stats)})`);
+            console.log(`Decompression finished (${JSON.stringify(stats)})`);
+        }
+    });
 }
 
 exports.parseHeader = parseHeader;
