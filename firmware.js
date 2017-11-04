@@ -279,6 +279,7 @@ function decompress(buffer) {
         1375293: 'sdk/', // /bluesdk/
         1375295: 'stack/', // /bluesdk/stack/me/
         1456397: 'T_R', // MLRA_NOT_RESOLVABLE
+        // In between here changes the buffer offset
         3803472: '\0application/j', // text/javascript <-- evidence that the lookup length is at least 4 bits!
         3803535: 'on\0', // vnd.microsoft.icon
         3803547: '\0video/', // video/quicktime
@@ -296,6 +297,7 @@ function decompress(buffer) {
         6774908: 'uary\0', // February
         7158264: ' over', // has been overwritten
         7219824: 'rel', // Wireless Controller
+        // In between here changes the buffer offset
         7367979: 'ode', // ??? incomplete
         7368583: 'ata', // 2009 Murata Manufacturing
     };
