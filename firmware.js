@@ -225,6 +225,7 @@ class RingBuffer {
 function decompress(buffer, sectionOffset, lookupBufferOffset) {
     const LOOKUP_BUFFER_SIZE = 0x1000;
     const VERBOSE = false;
+    const ANALYSIS = false;
 
     let bufferByteIndex = 0;
     const lookupBuffer = new RingBuffer(LOOKUP_BUFFER_SIZE, (LOOKUP_BUFFER_SIZE + lookupBufferOffset) % LOOKUP_BUFFER_SIZE);
@@ -385,24 +386,26 @@ function decompress(buffer, sectionOffset, lookupBufferOffset) {
                     lookupBytes.push(bufferByte);
                 }
 
-                // Analysis: check lookup expected vs. actual
-                // This is just here for analytical purposes, to help find out what's wrong with the lookup buffer
-                const byteIndex = bufferByteIndex - 2;
-                const key = byteIndex + sectionOffset;
-                if (analysisEntryKeys.includes(key)) {
-                    const expectedValue = analysisEntries[key]; // What we expect to read from the lookup buffer
-                    const expectedValueArray = expectedValue.split('').map((char) => char.charCodeAt(0)); // the same as value array for the find operation
-                    const read = lookupBytes.map((byte) => String.fromCharCode(byte)).reduce((a, b) => a + b); // What we actually read from the lookup buffer
-                    const match = expectedValueArray.length === lookupBytes.length && expectedValueArray.every((v, i) => v === lookupBytes[i]);
-                    console.log(`${match ? 'SUCCESS' : 'FAIL'}@${key}: expected "${expectedValue}", got "${read}"`);
-                    if (!match) {
-                        const find = lookupBuffer.find(expectedValueArray); // Find the expected values in the buffer
-                        console.log(`      expected index ${lookupIndex}, found index ${find}`);
-                        if (find > -1) {
-                            console.log('      offset', find - lookupIndex);
+                if (ANALYSIS) {
+                    // Analysis: check lookup expected vs. actual
+                    // This is just here for analytical purposes, to help find out what's wrong with the lookup buffer
+                    const byteIndex = bufferByteIndex - 2;
+                    const key = byteIndex + sectionOffset;
+                    if (analysisEntryKeys.includes(key)) {
+                        const expectedValue = analysisEntries[key]; // What we expect to read from the lookup buffer
+                        const expectedValueArray = expectedValue.split('').map((char) => char.charCodeAt(0)); // the same as value array for the find operation
+                        const read = lookupBytes.map((byte) => String.fromCharCode(byte)).reduce((a, b) => a + b); // What we actually read from the lookup buffer
+                        const match = expectedValueArray.length === lookupBytes.length && expectedValueArray.every((v, i) => v === lookupBytes[i]);
+                        console.log(`${match ? 'SUCCESS' : 'FAIL'}@${key}: expected "${expectedValue}", got "${read}"`);
+                        if (!match) {
+                            const find = lookupBuffer.find(expectedValueArray); // Find the expected values in the buffer
+                            console.log(`      expected index ${lookupIndex}, found index ${find}`);
+                            if (find > -1) {
+                                console.log('      offset', find - lookupIndex);
+                            }
+                            //fs.writeFileSync('lookupBuffer' + key, lookupBuffer.innerBuffer);
+                            console.log(`       ${bufferByteIndex - 2} lookup: 0x${toHexString(lookup, 2)}/${toBitString(lookup, 16)} => ${lookupLength}@${lookupIndex}`);
                         }
-                        //fs.writeFileSync('lookupBuffer' + key, lookupBuffer.innerBuffer);
-                        console.log(`       ${bufferByteIndex - 2} lookup: 0x${toHexString(lookup, 2)}/${toBitString(lookup, 16)} => ${lookupLength}@${lookupIndex}`);
                     }
                 }
 
