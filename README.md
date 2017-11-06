@@ -38,8 +38,6 @@ PTBL LENGTH=4096  C59Y1 VER=M1INT SUM=5181
 
 The `LENGTH` is the length in bytes of the following section body. `SUM` is a simple checksum calculated by summing all bytes. `OFFSET` seems to be an offset in the camera's memory space to which the section is written. The first header has the IDs of the following headers appended. All following headers start with their ID.
 
-A similar header format can be found in the firmware of an unknown device C5932 / C5932-v84. A similar format, but with shorter length, can also be found on some Fujifilm cameras (e.g. Finepix S800).
-
 ### Hardware & Software Identification
 
 Tons of interesting strings regarding the system can be found by runnings the Unix `strings` utility against the decompressed firmware. Some interesting strings regarding the hardware:
@@ -77,6 +75,8 @@ Other Cameras
 -------------
 
 The Fujifilm X-A10 camera uses the same [firmware](http://www.fujifilm.com/support/digital_cameras/software/firmware/x/xa10/download.html) format and can be unpacked with this tool as well. The compression scheme of the first section is also similar. In comparison to the M1 it contains an additional fifth section called "A9262" that contains additional code. Also interesting is that the model ID is very similar (M1: C59Y1, X-A10: C5932).
+
+Other Fujifilm cameras, e.g. Finepix S800, seem to use a similar firmware format, but with shorter headers, so these cannot be unpacked with this tool.
 
 FAQ
 ---
