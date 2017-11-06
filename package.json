@@ -9,7 +9,7 @@
     "decompress": "node index.js decompress"
   },
   "author": "Mario Guggenberger <mg@protyposis.net>",
-  "license": "ISC",
+  "license": "GPL-3.0",
   "dependencies": {
     "string": "^3.3.3"
   }
