@@ -418,8 +418,41 @@ function decompress(buffer, sectionOffset, lookupBufferOffset) {
     return outputBuffer.slice(0, outputBufferByteIndex);
 }
 
+/**
+ * A section ends with a zero padding and a new section starts at a 2048-byte aligned index.
+ * This only works if sections are padded with enough 0x00. If a sections fits better into the 2048 byte
+ * alignment, this detection fails. Also, this does not tell us if a section is compressed.
+ * @param data
+ * @returns {Array}
+ */
+function detectSections(data) {
+    let bufferByteIndex = 0;
+    let zeroCount = 0;
+    const sectionBreaks = [];
+
+    while(bufferByteIndex < data.length) {
+        const byte = data.readUInt8(bufferByteIndex++);
+
+        if (byte === 0x00) {
+            zeroCount++;
+        } else {
+            if ((bufferByteIndex - 1) % 2048 === 0 && zeroCount > 16) {
+                console.log(`Section break detected at ${bufferByteIndex - 1}`);
+                sectionBreaks.push(bufferByteIndex - 1);
+            }
+
+            zeroCount = 0;
+        }
+    }
+
+    return sectionBreaks;
+}
+
 function decompressFile(fileName, targetDirectory) {
     const data = fs.readFileSync(fileName);
+
+    // Detect sections (we run the detection but do not use the result for now)
+    detectSections(data);
 
     // The compressed firmware data is again split into multiple sections
     const sections = [
