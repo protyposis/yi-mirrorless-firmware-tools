@@ -265,10 +265,10 @@ function decompress(buffer, sectionOffset, lookupBufferOffset) {
     // Positions in the source file (incl 0x2000 header) at which lookup bytes are stored, and their expected lookup result
     // These are for firmware 3.0-int
     const analysisEntries = {
-        0096720: '  P', // PARTITION ? not sure about spaces
-        0096738: 'OR ',  // ERROR ? not sure about space
-        0096748: 'DATE ',  // UPDATE ? not sure about space
-        0096750: 'FIRM', // FIRMWARE  UPDATE ? this is actually longer and goes like this "??ERROR?FIRM"
+        // 0096720: '  P', // PARTITION ? not sure about spaces
+        // 0096738: 'OR ',  // ERROR ? not sure about space
+        // 0096748: 'DATE ',  // UPDATE ? not sure about space
+        // 0096750: 'FIRM', // FIRMWARE  UPDATE ? this is actually longer and goes like this "??ERROR?FIRM"
         0096818: ' ca', // SD card
         103532: 'text/', // text/xml
         1077305: 'ter', // Shutter Speed
@@ -284,7 +284,7 @@ function decompress(buffer, sectionOffset, lookupBufferOffset) {
         1375293: 'sdk/', // /bluesdk/
         1375295: 'stack/', // /bluesdk/stack/me/
         1456397: 'N_R', // MLRA_NON_RESOLVABLE
-        // In between here changes the buffer offset
+        // section change
         3803472: '\0application/j', // text/javascript <-- evidence that the lookup length is at least 4 bits!
         3803535: 'on\0', // vnd.microsoft.icon
         3803547: '\0video/', // video/quicktime
@@ -302,8 +302,8 @@ function decompress(buffer, sectionOffset, lookupBufferOffset) {
         6774908: 'uary\0', // February
         7158264: ' over', // has been overwritten
         7219824: 'rel', // Wireless Controller
-        // In between here changes the buffer offset
-        7367979: 'ode', // ??? incomplete
+        // section change
+        // 7367979: 'ode', // ??? incomplete
         7368583: 'ata', // 2009 Murata Manufacturing
     };
     const analysisEntryKeys = Object.keys(analysisEntries).map((key) => Number(key));
