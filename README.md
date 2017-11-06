@@ -42,24 +42,16 @@ A similar header format can be found in the firmware of an unknown device C5932 
 
 ### Hardware & Software Identification
 
-Some interesting strings:
+Tons of interesting strings regarding the system can be found by runnings the Unix `strings` utility against the decompressed firmware. Some interesting strings regarding the hardware:
 
 Section 0 / System
 
- * minios/iap_app
- * C:/XC_ODM/sdk/SDK_selfcheck/src/EV9x_DevEnv
- * minios/me_app
+ * C:/XC_ODM/sdk/SDK_selfcheck/src/EV9x_DevEnv/btstack/bluesdk
  * BCM4343A1_00_1.002 -> Wifi radio?
  * WA1 37.4MHz Murata Type-1FJ BT4.1 OTP-BD -> Bluetooth radio?
- * auth-keepalive-txbf-pktfilter-mchan-proptxstatus Version: 7.10.48.2 CRC: 396141be Date: Thu 2016-05-19 16:51:41 KST Ucode: 997.0 FWID.: 01-b37064e2
- * C%s: only support 1-stream 11n_256QAM for non-11ac compiled device!
  * Copyright (c) 2009-2010 Tokyo Electron Device Ltd
  * Broadcom BCM.%s 802.11 Wireless Controller %s
- * BCM43
- * Broadcom-0
- * 43430a1-roml/sdio-g-pool-apcs-i
- * auth Version: 7.10.48.2 CRC: 6164d53b Date: Tue 2016-04-05 10:19:38 KST Ucode
- * caddr=00:90:4c:c5:12 -> Epigram MAC (Broadcom)
+ * macaddr=00:90:4c:c5:12:38 -> Epigram MAC (Broadcom)
  * xtalfreq=374
  * bcm9
  * Copyright 2009 Murata Manufacturing Co.,Ltd
@@ -70,7 +62,7 @@ Section 2 / IPL
  * EV9XES1.0
  * EV9XES2.0
  * Warning: EV9X ES1.0 does not use 513MHz, it was changed to 400MHz
- * ARM926_1
+ * ARM926_1 -> armv5te architecture
  * ARM926_2
  * BCH2K124
 
