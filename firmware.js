@@ -308,10 +308,36 @@ function decompress(buffer, sectionOffset, lookupBufferOffset) {
     };
     const analysisEntryKeys = Object.keys(analysisEntries).map((key) => Number(key));
 
-    while (bufferByteIndex < buffer.length - 16) { // TODO find out how we can detect the actual end
+    while (bufferByteIndex < buffer.length) {
         // Read the flag byte, whose bits are flags that tell which bytes are to be copied directly, and which bytes
         // are lookup information.
         const flagByte = readNextByte();
+
+        // Detect end of section
+        // All sections are padded to 2048 byte chunks with 0x00
+        // A 0x00 flag byte with 8 zero lookups is highly unlikely, so we use that for now to detect the section end
+        // TODO find out how we can determine the actual end (where the length of a section is stored)
+        if (flagByte === 0x00) {
+            const oldBufferByteIndex = bufferByteIndex;
+            let zeroCount = 0;
+
+            for (let x = 0; x < 16; x++) {
+                if (readNextByte() === 0x00) {
+                    zeroCount++;
+                } else {
+                    break;
+                }
+            }
+
+            if (zeroCount === 16) {
+                console.log(`Section end detected at ${bufferByteIndex - 9}`);
+                break;
+            }
+
+            // End has not been detected, so restore the old buffer index and continue processing the data
+            bufferByteIndex = oldBufferByteIndex;
+        }
+
         // Parse the flag byte into a boolean flag array
         const flags = decodeFlagByte(flagByte);
 
