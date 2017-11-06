@@ -469,7 +469,7 @@ function decompressFile(fileName, targetDirectory) {
         // All sections have trailing zero-bytes to fit a multiple of 2048 bytes
         // These are the numbers for FW 3.0-int (2.0-int: 8192, 3158016, 6625280)
         // Looking at the decompressed data, it seems the major part is decompressed correctly, but not everything. So
-        // it might have to be split into more sections.
+        // it might have to be split into more sections. This is noticeable when looking at the strings.
         // TODO find out why not everything decompresses correctly, are the more parts to be split?
         [0x2000, 3127296, true, -18],
         [3127296, 7251968, true, -18],
