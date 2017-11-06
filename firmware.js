@@ -384,6 +384,11 @@ function decompress(buffer, sectionOffset, lookupBufferOffset) {
                 for (let x = 0; x < lookupLength; x++) {
                     let bufferByte = lookupBuffer.readUInt8(lookupIndex + x);
                     lookupBytes.push(bufferByte);
+
+                    // Write bytes into output and lookup buffer
+                    // The lookup buffer must be written instantly (not after the lookup is read)
+                    lookupBuffer.appendUInt8(bufferByte);
+                    writeNextByte(bufferByte);
                 }
 
                 if (ANALYSIS) {
@@ -408,12 +413,6 @@ function decompress(buffer, sectionOffset, lookupBufferOffset) {
                         }
                     }
                 }
-
-                // Write bytes into output and lookup buffer
-                lookupBytes.forEach((byte) => {
-                    lookupBuffer.appendUInt8(byte);
-                    writeNextByte(byte);
-                });
             }
         }
     }
@@ -468,9 +467,6 @@ function decompressFile(fileName, targetDirectory) {
         // TODO where are the sections and their lengths described?
         // All sections have trailing zero-bytes to fit a multiple of 2048 bytes
         // These are the numbers for FW 3.0-int (2.0-int: 8192, 3158016, 6625280)
-        // Looking at the decompressed data, it seems the major part is decompressed correctly, but not everything. So
-        // it might have to be split into more sections. This is noticeable when looking at the strings.
-        // TODO find out why not everything decompresses correctly, are the more parts to be split?
         [0x2000, 3127296, true, -18],
         [3127296, 7251968, true, -18],
         [7251968, data.length, true, -18],
