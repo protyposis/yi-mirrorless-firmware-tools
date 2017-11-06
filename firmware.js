@@ -316,6 +316,7 @@ function decompress(buffer, sectionOffset, lookupBufferOffset) {
         // Detect end of section
         // All sections are padded to 2048 byte chunks with 0x00
         // A 0x00 flag byte with 8 zero lookups is highly unlikely, so we use that for now to detect the section end
+        // If a section fits better into the 2048 byte alignment, this detection fails
         // TODO find out how we can determine the actual end (where the length of a section is stored)
         if (flagByte === 0x00) {
             const oldBufferByteIndex = bufferByteIndex;
