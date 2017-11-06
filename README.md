@@ -45,13 +45,12 @@ Tons of interesting strings regarding the system can be found by runnings the Un
 Section 0 / System
 
  * C:/XC_ODM/sdk/SDK_selfcheck/src/EV9x_DevEnv/btstack/bluesdk
- * BCM4343A1_00_1.002 -> Wifi radio?
- * WA1 37.4MHz Murata Type-1FJ BT4.1 OTP-BD -> Bluetooth radio?
+ * BCM4343A1_001.002.009.0043.0178 -> Wifi radio?
+ * BCM4343WA1 37.4MHz Murata Type-1FJ BT4.1 OTP-BD-0043 -> Bluetooth radio?
  * Copyright (c) 2009-2010 Tokyo Electron Device Ltd
  * Broadcom BCM.%s 802.11 Wireless Controller %s
- * macaddr=00:90:4c:c5:12:38 -> Epigram MAC (Broadcom)
- * xtalfreq=374
- * bcm9
+ * il0macaddr=00:90:4c:c5:12:38 -> Epigram MAC (Broadcom)
+ * bcm943430wlselgs_20150609__1FJ_lp2.txt
  * Copyright 2009 Murata Manufacturing Co.,Ltd
 
 Section 2 / IPL
