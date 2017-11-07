@@ -266,11 +266,11 @@ function decompress(buffer, sectionOffset, lookupBufferOffset) {
     // Positions in the source file (incl 0x2000 header) at which lookup bytes are stored, and their expected lookup result
     // These are for firmware 3.0-int
     const analysisEntries = {
-        // 0096720: '  P', // PARTITION ? not sure about spaces
-        // 0096738: 'OR ',  // ERROR ? not sure about space
-        // 0096748: 'DATE ',  // UPDATE ? not sure about space
-        // 0096750: 'FIRM', // FIRMWARE  UPDATE ? this is actually longer and goes like this "??ERROR?FIRM"
-        0096818: ' ca', // SD card
+        // 96720: '  P', // PARTITION ? not sure about spaces
+        // 96738: 'OR ',  // ERROR ? not sure about space
+        // 96748: 'DATE ',  // UPDATE ? not sure about space
+        // 96750: 'FIRM', // FIRMWARE  UPDATE ? this is actually longer and goes like this "??ERROR?FIRM"
+        96818: ' ca', // SD card
         103532: 'text/', // text/xml
         1077305: 'ter', // Shutter Speed
         1078447: 'mm F',
