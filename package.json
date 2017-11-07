@@ -10,6 +10,14 @@
   },
   "author": "Mario Guggenberger <mg@protyposis.net>",
   "license": "GPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/protyposis/yi-mirrorless-firmware-tools.git"
+  },
+  "bugs": {
+    "url": "https://github.com/protyposis/yi-mirrorless-firmware-tools/issues"
+  },
+  "homepage": "https://github.com/protyposis/yi-mirrorless-firmware-tools#readme",
   "dependencies": {
     "string": "^3.3.3"
   }
