@@ -1,7 +1,7 @@
 YI M1 Mirrorless Camera Firmware Unpacker
 =========================================
 
-A firmware unpacker for YI M1 firmware files. Currently does not much more than parsing the section headers of a firmware file and extracting the sections into separate files. Works with all firmware versions.
+A firmware unpacker for YI M1 firmware files. Parses the section headers of a firmware file and extracts the sections into separate files (all firmware versions), and splits and decompresses the firmware code section (currently FW 3.0-int only).
 
 Requirements: Node.js & npm
  
