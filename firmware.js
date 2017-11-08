@@ -479,13 +479,17 @@ function decompressFile(fileName, targetDirectory) {
         [7251968, data.length, true, -18],
     ];
 
-    sections.forEach(([start, end, compressed, lookupBufferOffset]) => {
+    sections.forEach(([start, end, compressed, lookupBufferOffset], index) => {
         const sectionData = data.slice(start, end);
+        const targetFileName = path.basename(fileName) + '.' + S(start).padLeft(8, '0');
+        let targetFileNameFull = path.join(targetDirectory, targetFileName);
+
+        console.log(`Section ${index}: ${start}-${end}`);
 
         if (compressed) {
+            console.log(`Decompressing...`);
             const decompressedData = decompress(sectionData, start, lookupBufferOffset);
-            const targetFileName = path.basename(fileName) + `.decompressed.${start}`;
-            const targetFileNameFull = path.join(targetDirectory, targetFileName);
+            targetFileNameFull += '.decompressed';
             fs.writeFileSync(targetFileNameFull, decompressedData);
 
             const stats = {
@@ -495,8 +499,12 @@ function decompressFile(fileName, targetDirectory) {
                 outputFile: targetFileNameFull,
             };
 
-            console.log(`Decompression finished (${JSON.stringify(stats)})`);
+            console.log(`Decompression finished (compression rate: ${stats.compressionRate})`);
+        } else {
+            fs.writeFileSync(targetFileNameFull, sectionData);
         }
+
+        console.log(`Output: ${targetFileNameFull}`);
     });
 }
 
