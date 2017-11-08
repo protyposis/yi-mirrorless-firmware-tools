@@ -456,6 +456,13 @@ function decompressFile(fileName, targetDirectory) {
     // Detect sections (we run the detection but do not use the result for now)
     detectSections(data);
 
+    console.warn(
+        '# WARNING ###################################################\n' +
+        '# Decompression currently only works correctly for firmware #\n' +
+        '# version 3.0-int due to hardcoded section lengths!         #\n' +
+        '#############################################################'
+    );
+
     // The compressed firmware data is again split into multiple sections
     const sections = [
         // start, end, compressed, lookup buffer offset (if compressed)
