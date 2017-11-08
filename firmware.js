@@ -491,7 +491,7 @@ function decompressFile(fileName, targetDirectory) {
             const stats = {
                 inputSize: sectionData.length,
                 outputSize: decompressedData.length,
-                compressionRate: 1 / decompressedData.length * sectionData.length,
+                compressionRate: decompressedData.length / sectionData.length,
                 outputFile: targetFileNameFull,
             };
 
