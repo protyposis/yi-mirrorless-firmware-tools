@@ -67,7 +67,7 @@ Section 2 / IPL
 
 #### Wifi / HTTP Server
 
-When the YI Camera app is paired with the camera, the camera sets a Wifi password which is a 8 digit number. This password can be read from the Android app through `logcat`, and can then be used to connect a computer with the camera's wifi. The camera has a fixed IP `192.168.0.10`, and you can then send commands to the camera via GET requests, e.g. `http://192.168.0.10/?data={"command":"GetCameraStatus"}` to get the camera status. The camera wifi is started up by the app through Bluetooth, so you have to connect the app first. Seems like it does not support multiple clients (they can connect but only the first gets an IP address), so you need to turn off the phone's wifi to successfully connect another device. 
+When the YI Camera app is paired with the camera, the camera sets a Wifi password which is a 8 digit number. This password can be read from the Android app through `logcat`, and can then be used to connect a computer with the camera's wifi. The camera has a fixed IP `192.168.0.10`, and you can then send commands to the camera via GET requests, e.g. `http://192.168.0.10/?data={"command":"GetCameraStatus"}` to get the camera status. The list of commands can be extracted from the decompressed firmware by extracting the strings with the `strings` utility. The camera wifi is started up by the app through Bluetooth, so you have to connect the app first. Seems like it does not support multiple clients (they can connect but only the first gets an IP address), so you need to turn off the phone's wifi to successfully connect another device. 
 
 ### Next steps
 
