@@ -71,7 +71,7 @@ When the YI Camera app is paired with the camera, the camera sets a Wifi passwor
 
 ### Next steps
 
- * Identify the exact format of the first section / fix decompression
+ * Determine where the sizes of the compressed sections within the first section are stored to support decompression of all firmware versions
  * Identify partition table format and decode
  * Disassemble first section
  * Change something simple (e.g. the 500 shot limit in the beta firmware), repack FW file and upload to camera
