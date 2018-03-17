@@ -143,6 +143,7 @@ function unpack(fileName, targetDirectory) {
                 console.info(`Firmware version identified: ${version[3]}`);
             } catch (error) {
                 console.warn(`Cannot identify firmware: ${error}`);
+                console.warn(`Please open an issue to get this version added: https://github.com/protyposis/yi-mirrorless-firmware-tools/issues`);
             }
         }
 
