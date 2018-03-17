@@ -272,14 +272,14 @@ function compress(buffer, lookupBufferOffset) {
 
             if (index === -1) {
                 // Lookup was unsuccessful, we just copy the byte into the output
-                console.log('copy byte');
+                // console.log('copy byte');
                 flags.push(true); // true === copy byte
                 const nextByte = readNextByte();
                 outputBuffer.push(nextByte);
                 lookupBuffer.appendUInt8(nextByte);
             } else {
                 // Lookup success
-                console.log('lookup success', length, index);
+                // console.log('lookup success', length, index);
                 flags.push(false); // false === lookup bytes
                 const lookup1 = index >> 4;
                 const lookup2 = ((index & 0x0F) << 4) | ((length - 3) & 0x0F);
