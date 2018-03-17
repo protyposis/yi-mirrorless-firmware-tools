@@ -173,6 +173,11 @@ function unpack(fileName, targetDirectory) {
             console.log(`Checksum test ok (${sum})`);
         }
 
+        if (sectionCount === 0) {
+            // Detect sections (we run the detection but do not use the result for now)
+            detectSections(sectionBuffer);
+        }
+
         // Write section to file
         const sectionFileName = path.basename(fileName)
             + `.${sectionCount}`
@@ -182,7 +187,7 @@ function unpack(fileName, targetDirectory) {
         fs.writeFileSync(outputSectionFileName, sectionBuffer);
         console.log(`Output file: ${sectionFileName}`);
 
-        if (version) {
+        if (sectionCount === 0 && version) {
             if (version[4]) {
                 const sectionDecompressionMetadata = version[4];
                 decompressFile(sectionDecompressionMetadata, outputSectionFileName, targetDirectory);
@@ -502,9 +507,6 @@ function detectSections(data) {
 
 function decompressFile(sections, fileName, targetDirectory) {
     const data = fs.readFileSync(fileName);
-
-    // Detect sections (we run the detection but do not use the result for now)
-    detectSections(data);
 
     sections.forEach(([start, end, compressed, lookupBufferOffset], index) => {
         if (end === -1) {
