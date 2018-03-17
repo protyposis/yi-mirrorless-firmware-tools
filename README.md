@@ -1,15 +1,16 @@
 YI M1 Mirrorless Camera Firmware Unpacker
 =========================================
 
-A firmware unpacker for YI M1 firmware files. Parses the section headers of a firmware file and extracts the sections into separate files (all firmware versions), and splits and decompresses the firmware code section (currently FW 3.0-int only).
+A firmware unpacker for YI M1 firmware files. Parses the section headers of a firmware file, extracts the sections into separate files, and splits and decompresses the firmware code section. It can also change the region of firmware files between Chinese (CN) to International (INT) to install the international firmware on Chinese models and vice versa.
 
 Requirements: Node.js & npm
  
 Usage: 
  1. `npm install`
  1. Download [firmware](https://www.yitechnology.com/yi-m1-mirrorless-camera-firmware)
- 1. `npm run unpack /path/to/firmware.bin`
- 1. `npm run decompress /path/to/firmware.bin.0` (output from `unpack`)
+ 1. Run any of the supported commands
+    * `npm run unpack /path/to/firmware.bin` to unpack the firmware file into separate (decompressed) files
+    * `npm run flipregion /path/to/firmware.bin` to change the region between CN and INT
 
 The output will be a number of files (usually 4) named `firmware.bin.{sectionNumber}[.{sectionId}]`.
 
