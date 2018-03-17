@@ -179,11 +179,6 @@ function unpack(fileName, targetDirectory) {
             console.log(`Checksum test ok (${sum})`);
         }
 
-        if (sectionCount === 0) {
-            // Detect sections (we run the detection but do not use the result for now)
-            detectSections(sectionBuffer);
-        }
-
         // Write section to file
         const sectionFileName = path.basename(fileName)
             + `.${sectionCount}`
@@ -194,17 +189,9 @@ function unpack(fileName, targetDirectory) {
         console.log(`Output file: ${sectionFileName}`);
 
         if (sectionCount === 0 && version) {
-            if (version[4]) {
-                const sectionDecompressionMetadata = version[4];
-                decompressFile(sectionDecompressionMetadata, outputSectionFileName, targetDirectory);
-            } else {
-                console.warn(
-                    '# WARNING ###################################################\n' +
-                    '# Skipping decompression. No decompression metadata         #\n' +
-                    '# available for this firmware version.                      #\n' +
-                    '#############################################################'
-                );
-            }
+            const sectionBreaks = detectSections(sectionBuffer);
+            const sectionDecompressionMetadata = buildSectionDecompressionMetadata(sectionBreaks, sectionBuffer.length);
+            decompressFile(sectionDecompressionMetadata, outputSectionFileName, targetDirectory);
         }
 
         sectionCount++;
@@ -509,6 +496,32 @@ function detectSections(data) {
     }
 
     return sectionBreaks;
+}
+
+function buildSectionDecompressionMetadata(sectionBreaks, sectionLength) {
+    const sectionDecompressionMetadata = [];
+
+    [0, ...sectionBreaks, sectionLength].forEach((_, index, positions) => {
+        if (index === 0) {
+            // We skip the first entry because it does not have a predecessor
+            return;
+        }
+
+        const sectionStart = positions[index - 1];
+        const sectionEnd = positions[index];
+        const sectionNumber = sectionDecompressionMetadata.length;
+        const compressed = sectionNumber > 1;
+        // All compressed sections have a -18 buffer offset, seems like there is an 18 byte header
+        // Actually, all sections start with compressed data, there seems not to be a 18 byte header... where do the
+        // 18 byte come from? Init data? Where does the init data come from?
+        // TODO why the 18 byte offset?
+        // TODO where are the sections and their lengths described?
+        const lookupBufferOffset = -18;
+
+        sectionDecompressionMetadata.push([sectionStart, sectionEnd, compressed, lookupBufferOffset]);
+    });
+
+    return sectionDecompressionMetadata;
 }
 
 function decompressFile(sections, fileName, targetDirectory) {
