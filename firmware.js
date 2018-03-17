@@ -8,6 +8,7 @@
 const fs = require('fs');
 const path = require('path');
 const S = require('string');
+const { versions } = require('./versions');
 
 const FW_SECTION_HEADER_LENGTH = 0x100;
 
@@ -80,6 +81,28 @@ function parseHeader(headerString) {
     return parsedHeader;
 }
 
+function identifyVersion(header) {
+    const deviceIdVersions = versions.filter(version => version[0] === header.deviceId);
+
+    if (deviceIdVersions.length === 0) {
+        throw `unknown deviceId ${header.deviceId}`;
+    }
+
+    const deviceVersions = deviceIdVersions.filter(version => version[1] === header.deviceVersion);
+
+    if (deviceVersions.length === 0) {
+        throw `unknown device version ${header.deviceVersion}`;
+    }
+
+    const dvrVersions = deviceVersions.filter(version => version[2] === header.dvr);
+
+    if (dvrVersions.length === 0) {
+        throw `unknown dvr version ${header.dvr}`;
+    }
+
+    return dvrVersions[0];
+}
+
 function unpack(fileName, targetDirectory) {
     const fd = fs.openSync(fileName, 'r');
     const headerBuffer = Buffer.alloc(FW_SECTION_HEADER_LENGTH);
@@ -112,6 +135,16 @@ function unpack(fileName, targetDirectory) {
         console.log(`Raw header string: ${headerString}`);
         const header = parseHeader(headerString);
         console.log(`Parsed header:`, header);
+
+        // Identify the firmware version after the first section head is parsed
+        if (sectionCount === 0) {
+            try {
+                const version = identifyVersion(header);
+                console.info(`Firmware version identified: ${version[3]}`);
+            } catch (error) {
+                console.warn(`Cannot identify firmware: ${error}`);
+            }
+        }
 
         // Read section body
         const sectionBuffer = Buffer.alloc(header.sectionLength);
