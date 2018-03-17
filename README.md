@@ -20,7 +20,7 @@ Firmware files consist of 4 sections.
 
 | Section Number | Section Id | Size | Description |
 | -------------- | ---------- | ---- | ----------- |
-| 0              | *none*     | variable, ~7 MB | Most probably the actual firmware code. Contains two sections with 0x1000 byte length each, followed by compressed data (compressed with some kind of LZSS algorithm). |
+| 0              | *none*     | variable, ~7 MB | Most probably the actual firmware code. Contains two sections with 0x1000 byte length each, followed by 3 LZSS-compressed data sections). |
 | 1              | ND1        | variable, ~4 MB | Offset 0x1600000. Memory image that contains resources like bitmaps, fonts, and texts in different languages |
 | 2              | IPL        | 128 kB, 0x20000 byte | Bootloader (Initial Program Loader) |
 | 3              | PTBL       | 4 kB, 0x1000 byte | Partition table, unknown format |
