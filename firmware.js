@@ -468,7 +468,7 @@ function decompressFile(fileName, targetDirectory) {
         // start, end, compressed, lookup buffer offset (if compressed)
         [0, 0x2000, false, -1],
         // All compressed sections have a -18 buffer offset, seems like there is an 18 byte header
-        // Actually, all sections start with compressed data, there seems not bo be a 18 byte header... where do the
+        // Actually, all sections start with compressed data, there seems not to be a 18 byte header... where do the
         // 18 byte come from? Init data? Where does the init data come from?
         // TODO why the 18 byte offset?
         // TODO where are the sections and their lengths described?
