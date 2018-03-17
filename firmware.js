@@ -281,7 +281,6 @@ class RingBuffer {
 function decompress(buffer, sectionOffset, lookupBufferOffset) {
     const LOOKUP_BUFFER_SIZE = 0x1000;
     const VERBOSE = false;
-    const ANALYSIS = false;
 
     let bufferByteIndex = 0;
     const lookupBuffer = new RingBuffer(LOOKUP_BUFFER_SIZE, (LOOKUP_BUFFER_SIZE + lookupBufferOffset) % LOOKUP_BUFFER_SIZE);
@@ -318,52 +317,6 @@ function decompress(buffer, sectionOffset, lookupBufferOffset) {
     const toHexString = (value, bytes) => {
         return S(value.toString(16)).padLeft(bytes * 2, '0').toString().toUpperCase();
     };
-
-    // Positions in the source file (incl 0x2000 header) at which lookup bytes are stored, and their expected lookup result
-    // These are for firmware 3.0-int
-    const analysisEntries = {
-        // 96720: '  P', // PARTITION ? not sure about spaces
-        // 96738: 'OR ',  // ERROR ? not sure about space
-        // 96748: 'DATE ',  // UPDATE ? not sure about space
-        // 96750: 'FIRM', // FIRMWARE  UPDATE ? this is actually longer and goes like this "??ERROR?FIRM"
-        96818: ' ca', // SD card
-        103532: 'text/', // text/xml
-        1077305: 'ter', // Shutter Speed
-        1078447: 'mm F',
-        1364501: 'sta', // /btstack/
-        1364503: 'ck/', // /btstack/
-        1364510: 'sdk/', // /bluesdk/
-        1364512: 'stack/', // bluesdk/stack/me/
-        1365111: 'ack', // ->callback != 0
-        1368363: 'ack', // ->packet
-        1375274: 'Dev', // /EV9x_DevEnv/
-        1375286: 'ck/', // /btstack/
-        1375293: 'sdk/', // /bluesdk/
-        1375295: 'stack/', // /bluesdk/stack/me/
-        1456397: 'N_R', // MLRA_NON_RESOLVABLE
-        // section change
-        3803472: '\0application/j', // text/javascript <-- evidence that the lookup length is at least 4 bits!
-        3803535: 'on\0', // vnd.microsoft.icon
-        3803547: '\0video/', // video/quicktime
-        3809723: '2345', // 0123456789
-        3809793: 'stuv', // mnopqrstuvwxyz
-        5275024: 'ure', // Aperture
-        6773982: '00 ', // <title>400 Bad Request
-        6773999: 'title>', // 400 Bad Request</title>
-        6774003: 'head><', // </title></head>
-        6774046: 'equest', // Your browser sent a request that
-        6774052: 't th', // a request that this server
-        6774057: ' se', // that this server could
-        6774061: 'er ', // this server could not
-        6774620: 'rst', // mnopqrstuvwxyz
-        6774908: 'uary\0', // February
-        7158264: ' over', // has been overwritten
-        7219824: 'rel', // Wireless Controller
-        // section change
-        // 7367979: 'ode', // ??? incomplete
-        7368583: 'ata', // 2009 Murata Manufacturing
-    };
-    const analysisEntryKeys = Object.keys(analysisEntries).map((key) => Number(key));
 
     while (bufferByteIndex < buffer.length) {
         // Read the flag byte, whose bits are flags that tell which bytes are to be copied directly, and which bytes
@@ -445,29 +398,6 @@ function decompress(buffer, sectionOffset, lookupBufferOffset) {
                     // The lookup buffer must be written instantly (not after the lookup is read)
                     lookupBuffer.appendUInt8(bufferByte);
                     writeNextByte(bufferByte);
-                }
-
-                if (ANALYSIS) {
-                    // Analysis: check lookup expected vs. actual
-                    // This is just here for analytical purposes, to help find out what's wrong with the lookup buffer
-                    const byteIndex = bufferByteIndex - 2;
-                    const key = byteIndex + sectionOffset;
-                    if (analysisEntryKeys.includes(key)) {
-                        const expectedValue = analysisEntries[key]; // What we expect to read from the lookup buffer
-                        const expectedValueArray = expectedValue.split('').map((char) => char.charCodeAt(0)); // the same as value array for the find operation
-                        const read = lookupBytes.map((byte) => String.fromCharCode(byte)).reduce((a, b) => a + b); // What we actually read from the lookup buffer
-                        const match = expectedValueArray.length === lookupBytes.length && expectedValueArray.every((v, i) => v === lookupBytes[i]);
-                        console.log(`${match ? 'SUCCESS' : 'FAIL'}@${key}: expected "${expectedValue}", got "${read}"`);
-                        if (!match) {
-                            const find = lookupBuffer.find(expectedValueArray); // Find the expected values in the buffer
-                            console.log(`      expected index ${lookupIndex}, found index ${find}`);
-                            if (find > -1) {
-                                console.log('      offset', find - lookupIndex);
-                            }
-                            //fs.writeFileSync('lookupBuffer' + key, lookupBuffer.innerBuffer);
-                            console.log(`       ${bufferByteIndex - 2} lookup: 0x${toHexString(lookup, 2)}/${toBitString(lookup, 16)} => ${lookupLength}@${lookupIndex}`);
-                        }
-                    }
                 }
             }
         }
