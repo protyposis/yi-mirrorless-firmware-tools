@@ -568,4 +568,50 @@ function decompressFile(sections, fileName, targetDirectory) {
     });
 }
 
+function flipRegion(fileName, targetDirectory) {
+    const INT = 'M1INT';
+    const CN = 'M1CN';
+
+    let sourceRegion, targetRegion;
+
+    const outputBuffers = [];
+
+    readSections(fileName, (sectionNumber, rawHeader, parsedHeader, version, data) => {
+        // Detect source/target regions in first section
+        if (!sourceRegion) {
+            if (S(rawHeader).contains(INT)) {
+                sourceRegion = INT;
+                targetRegion = CN;
+            } else if (S(rawHeader).contains(CN)) {
+                sourceRegion = CN;
+                targetRegion = INT;
+            } else {
+                throw `Invalid region`;
+            }
+        }
+
+        // Flip CN <-> INT
+        let modifiedRawHeader = rawHeader.replace(sourceRegion, targetRegion);
+
+        // Append CR LF
+        modifiedRawHeader += '\r\n';
+
+        // Pad the header to the output header length
+        modifiedRawHeader = S(modifiedRawHeader).padRight(FW_SECTION_HEADER_LENGTH).s;
+
+        outputBuffers.push(Buffer.from(modifiedRawHeader, 'ascii'));
+        outputBuffers.push(data);
+    });
+
+    const targetFileBaseName = path.basename(fileName) + '.' + targetRegion;
+    const targetFileName = path.join(targetDirectory, targetFileBaseName);
+
+    fs.writeFileSync(targetFileName, Buffer.concat(outputBuffers));
+
+    console.info(`Flipped region from ${sourceRegion} to ${targetRegion}`);
+    console.info(`Modified firmware written to: ${targetFileName}`);
+    console.info(`You can now rename the file '${targetFileBaseName}' to 'firmware.bin' and upload it to the camera`);
+}
+
 exports.unpack = unpack;
+exports.flipRegion = flipRegion;

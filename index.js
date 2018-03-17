@@ -9,8 +9,9 @@ const path = require('path');
 const firmware = require('./firmware');
 
 if (process.argv.length <= 3) {
-    console.log('usage: npm run [unpack] <inputfile>');
+    console.log('usage: npm run [unpack|flipregion] <inputfile>');
     console.log(' unpack: unpacks a firmware file into its sections');
+    console.log(' flipregion: changes the region of a firmware file between CN and INT');
     console.error('Arguments missing');
     return;
 }
@@ -23,6 +24,10 @@ try {
     switch (command) {
         case 'unpack':
             firmware.unpack(inputFileName, outputDirectoryName);
+            break;
+
+        case 'flipregion':
+            firmware.flipRegion(inputFileName, outputDirectoryName);
             break;
 
         default:
