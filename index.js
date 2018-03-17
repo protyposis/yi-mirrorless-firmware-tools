@@ -9,7 +9,7 @@ const path = require('path');
 const firmware = require('./firmware');
 
 if (process.argv.length <= 3) {
-    console.log('usage: npm run [unpack|string] <inputfile>');
+    console.log('usage: npm run [unpack|decompress] <inputfile>');
     console.log(' unpack: unpacks a firmware file into its sections (needs full firmware file as input)');
     console.log(' decompress: decompresses section 0 (needs section 0 as input)');
     console.error('Arguments missing');
