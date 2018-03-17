@@ -135,11 +135,12 @@ function unpack(fileName, targetDirectory) {
         console.log(`Raw header string: ${headerString}`);
         const header = parseHeader(headerString);
         console.log(`Parsed header:`, header);
+        let version = null;
 
         // Identify the firmware version after the first section head is parsed
         if (sectionCount === 0) {
             try {
-                const version = identifyVersion(header);
+                version = identifyVersion(header);
                 console.info(`Firmware version identified: ${version[3]}`);
             } catch (error) {
                 console.warn(`Cannot identify firmware: ${error}`);
@@ -177,8 +178,23 @@ function unpack(fileName, targetDirectory) {
             + `.${sectionCount}`
             + (header.sectionId ? `.${header.sectionId}` : '');
 
-        fs.writeFileSync(path.join(targetDirectory, sectionFileName), sectionBuffer);
+        const outputSectionFileName = path.join(targetDirectory, sectionFileName);
+        fs.writeFileSync(outputSectionFileName, sectionBuffer);
         console.log(`Output file: ${sectionFileName}`);
+
+        if (version) {
+            if (version[4]) {
+                const sectionDecompressionMetadata = version[4];
+                decompressFile(sectionDecompressionMetadata, outputSectionFileName, targetDirectory);
+            } else {
+                console.warn(
+                    '# WARNING ###################################################\n' +
+                    '# Skipping decompression. No decompression metadata         #\n' +
+                    '# available for this firmware version.                      #\n' +
+                    '#############################################################'
+                );
+            }
+        }
 
         sectionCount++;
     }
@@ -484,36 +500,17 @@ function detectSections(data) {
     return sectionBreaks;
 }
 
-function decompressFile(fileName, targetDirectory) {
+function decompressFile(sections, fileName, targetDirectory) {
     const data = fs.readFileSync(fileName);
 
     // Detect sections (we run the detection but do not use the result for now)
     detectSections(data);
 
-    console.warn(
-        '# WARNING ###################################################\n' +
-        '# Decompression currently only works correctly for firmware #\n' +
-        '# version 3.0-int due to hardcoded section lengths!         #\n' +
-        '#############################################################'
-    );
-
-    // The compressed firmware data is again split into multiple sections
-    const sections = [
-        // start, end, compressed, lookup buffer offset (if compressed)
-        [0, 0x2000, false, -1],
-        // All compressed sections have a -18 buffer offset, seems like there is an 18 byte header
-        // Actually, all sections start with compressed data, there seems not to be a 18 byte header... where do the
-        // 18 byte come from? Init data? Where does the init data come from?
-        // TODO why the 18 byte offset?
-        // TODO where are the sections and their lengths described?
-        // All sections have trailing zero-bytes to fit a multiple of 2048 bytes
-        // These are the numbers for FW 3.0-int (2.0-int: 8192, 3158016, 6625280)
-        [0x2000, 3127296, true, -18],
-        [3127296, 7251968, true, -18],
-        [7251968, data.length, true, -18],
-    ];
-
     sections.forEach(([start, end, compressed, lookupBufferOffset], index) => {
+        if (end === -1) {
+            end = data.length;
+        }
+
         const sectionData = data.slice(start, end);
         const targetFileName = path.basename(fileName) + '.' + S(start).padLeft(8, '0');
         let targetFileNameFull = path.join(targetDirectory, targetFileName);
@@ -542,6 +539,4 @@ function decompressFile(fileName, targetDirectory) {
     });
 }
 
-exports.parseHeader = parseHeader;
 exports.unpack = unpack;
-exports.decompressFile = decompressFile;

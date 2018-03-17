@@ -6,7 +6,6 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "unpack": "node index.js unpack",
-    "decompress": "node index.js decompress"
   },
   "author": "Mario Guggenberger <mg@protyposis.net>",
   "license": "GPL-3.0",
