@@ -90,7 +90,7 @@ FAQ
 
 > What's the purpose of this tool?
 
-To lay the roots for a firmware hack.
+To lay the roots for a firmware hack. To help with firmware analysis. To change firmware regions.
 
 > What can a potential firmware hack do?
 
