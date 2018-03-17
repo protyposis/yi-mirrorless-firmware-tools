@@ -1,3 +1,8 @@
+/*
+ * YI Mirrorless Firmware Tools
+ * Author: Mario Guggenberger <mg@protyposis.net>
+ * Licensed under the GPLv3
+ */
 exports.versions = [
     // model, version, firmware version, firmware name
     ['C59Y1', 'M1INT', 'Ver1.12', '1.0.20-int'],
