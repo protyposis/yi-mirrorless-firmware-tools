@@ -377,7 +377,7 @@ function decompress(buffer, lookupBufferOffset) {
                 const lookup2 = readNextByte();
                 const lookup = lookup1 << 8 | lookup2;
 
-                // length is 4 bytes, index 12 bytes
+                // length is 4 bits, index 12 bits
                 // The bytes are ordered big endian
                 const lookupIndex = lookup1 | ((lookup2 & 0xF0) << 4);
                 const lookupLength = (lookup2 & 0x0F) + 3;
