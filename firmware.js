@@ -8,7 +8,7 @@
 const fs = require('fs');
 const path = require('path');
 const S = require('string');
-const { versions } = require('./versions');
+const {versions} = require('./versions');
 
 const FW_SECTION_HEADER_LENGTH = 0x100;
 
@@ -482,7 +482,7 @@ function detectSections(data) {
     let zeroCount = 0;
     const sectionBreaks = [];
 
-    while(bufferByteIndex < data.length) {
+    while (bufferByteIndex < data.length) {
         const byte = data.readUInt8(bufferByteIndex++);
 
         if (byte === 0x00) {
