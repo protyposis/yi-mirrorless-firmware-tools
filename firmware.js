@@ -278,7 +278,7 @@ class RingBuffer {
  * @param buffer
  * @returns {Buffer}
  */
-function decompress(buffer, sectionOffset, lookupBufferOffset) {
+function decompress(buffer, lookupBufferOffset) {
     const LOOKUP_BUFFER_SIZE = 0x1000;
     const VERBOSE = false;
 
@@ -478,7 +478,7 @@ function decompressFile(sections, fileName, targetDirectory) {
 
         if (compressed) {
             console.log(`Decompressing...`);
-            const decompressedData = decompress(sectionData, start, lookupBufferOffset);
+            const decompressedData = decompress(sectionData, lookupBufferOffset);
             targetFileNameFull += '.decompressed';
             fs.writeFileSync(targetFileNameFull, decompressedData);
 
