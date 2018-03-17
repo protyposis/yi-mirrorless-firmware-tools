@@ -189,7 +189,7 @@ function unpack(fileName, targetDirectory) {
         console.log(`Output file: ${sectionFileName}`);
 
         if (sectionCount === 0 && version) {
-            const sectionBreaks = detectSections(sectionBuffer);
+            const sectionBreaks = detectSectionBreaks(sectionBuffer);
             const sectionDecompressionMetadata = buildSectionDecompressionMetadata(sectionBreaks, sectionBuffer.length);
             decompressFile(sectionDecompressionMetadata, outputSectionFileName, targetDirectory);
         }
@@ -475,7 +475,7 @@ function decompress(buffer, sectionOffset, lookupBufferOffset) {
  * @param data
  * @returns {Array}
  */
-function detectSections(data) {
+function detectSectionBreaks(data) {
     let bufferByteIndex = 0;
     let zeroCount = 0;
     const sectionBreaks = [];
