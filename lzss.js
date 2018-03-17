@@ -62,9 +62,10 @@ class RingBuffer {
         };
 
         for (let x = 0; x < this.buffer.length; x++) {
+            const searchIndex = (this.bufferIndex - x + this.buffer.length) % this.buffer.length;
             // Check the first value and if it matched, check all remaining ones
-            if (this.buffer.readUInt8(x) === byteArray[0] && check(x)) {
-                return x;
+            if (this.buffer.readUInt8(searchIndex) === byteArray[0] && check(searchIndex)) {
+                return searchIndex;
             }
         }
 
