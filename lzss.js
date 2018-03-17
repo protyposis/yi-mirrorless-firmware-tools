@@ -50,9 +50,13 @@ class RingBuffer {
         ]);
     }
 
-    find(byteArray) {
+    find(byteArray, length) {
+        if (length === undefined) {
+            length = byteArray.length;
+        }
+
         const check = (x) => {
-            for (let y = 1; y < byteArray.length; y++) {
+            for (let y = 1; y < length; y++) {
                 if (this.buffer.readUInt8((x + y) % this.buffer.length) !== byteArray[y]) {
                     return false;
                 }
@@ -262,8 +266,7 @@ function compress(buffer, lookupBufferOffset) {
             let length;
             for (length = 18; length > 2; length--) {
                 // Take slices with decreasing lengths and see if we can find them in the lookup buffer
-                const lookupSlice = lookup.slice(0, length);
-                index = lookupBuffer.find(lookupSlice);
+                index = lookupBuffer.find(lookup, length);
 
                 if (index > -1) {
                     break;
