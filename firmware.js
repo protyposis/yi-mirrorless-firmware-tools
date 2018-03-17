@@ -103,12 +103,13 @@ function identifyVersion(header) {
     return dvrVersions[0];
 }
 
-function unpack(fileName, targetDirectory) {
+function readSections(fileName, sectionReadCallback) {
     const fd = fs.openSync(fileName, 'r');
     const headerBuffer = Buffer.alloc(FW_SECTION_HEADER_LENGTH);
 
     let readPosition = 0;
     let sectionCount = 0;
+    let version = null;
 
     // Skip leading spaces until the first header starts
     // (This is necessary for the Fujifilm X-A10 which has two leading space characters)
@@ -135,7 +136,6 @@ function unpack(fileName, targetDirectory) {
         console.log(`Raw header string: ${headerString}`);
         const header = parseHeader(headerString);
         console.log(`Parsed header:`, header);
-        let version = null;
 
         // Identify the firmware version after the first section head is parsed
         if (sectionCount === 0) {
@@ -179,23 +179,31 @@ function unpack(fileName, targetDirectory) {
             console.log(`Checksum test ok (${sum})`);
         }
 
-        // Write section to file
-        const sectionFileName = path.basename(fileName)
-            + `.${sectionCount}`
-            + (header.sectionId ? `.${header.sectionId}` : '');
-
-        const outputSectionFileName = path.join(targetDirectory, sectionFileName);
-        fs.writeFileSync(outputSectionFileName, sectionBuffer);
-        console.log(`Output file: ${sectionFileName}`);
-
-        if (sectionCount === 0 && version) {
-            const sectionBreaks = detectSectionBreaks(sectionBuffer);
-            const sectionDecompressionMetadata = buildSectionDecompressionMetadata(sectionBreaks, sectionBuffer.length);
-            decompressFile(sectionDecompressionMetadata, outputSectionFileName, targetDirectory);
-        }
+        // section number, raw header, parsed header, FW version info, body data
+        sectionReadCallback(sectionCount, headerString, header, version, sectionBuffer);
 
         sectionCount++;
     }
+}
+
+function unpack(fileName, targetDirectory) {
+    readSections(fileName, (sectionNumber, rawHeader, parsedHeader, version, data) => {
+        // Write section to file
+        const sectionFileName = path.basename(fileName)
+            + `.${sectionNumber}`
+            + (parsedHeader.sectionId ? `.${parsedHeader.sectionId}` : '');
+
+        const outputSectionFileName = path.join(targetDirectory, sectionFileName);
+        fs.writeFileSync(outputSectionFileName, data);
+        console.log(`Output file: ${sectionFileName}`);
+
+        // Slip first section into subsections
+        if (sectionNumber === 0 && version) {
+            const sectionBreaks = detectSectionBreaks(data);
+            const sectionDecompressionMetadata = buildSectionDecompressionMetadata(sectionBreaks, data.length);
+            decompressFile(sectionDecompressionMetadata, outputSectionFileName, targetDirectory);
+        }
+    });
 }
 
 class RingBuffer {
