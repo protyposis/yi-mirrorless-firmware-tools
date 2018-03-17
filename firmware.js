@@ -143,8 +143,14 @@ function unpack(fileName, targetDirectory) {
                 version = identifyVersion(header);
                 console.info(`Firmware version identified: ${version[3]}`);
             } catch (error) {
-                console.warn(`Cannot identify firmware: ${error}`);
-                console.warn(`Please open an issue to get this version added: https://github.com/protyposis/yi-mirrorless-firmware-tools/issues`);
+                const warning =
+                    '# WARNING ###########################################################\n' +
+                    '# Cannot identify firmware: $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #\n' +
+                    '# Please open an issue to get this version added:                   #\n' +
+                    '# https://github.com/protyposis/yi-mirrorless-firmware-tools/issues #\n' +
+                    '#####################################################################';
+                const placeholder = '$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$';
+                console.warn(warning.replace(placeholder, S(error).padRight(placeholder.length).s));
             }
         }
 
