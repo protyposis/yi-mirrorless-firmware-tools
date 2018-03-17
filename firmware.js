@@ -406,6 +406,103 @@ function decompress(buffer, lookupBufferOffset) {
     return outputBuffer.slice(0, outputBufferByteIndex);
 }
 
+function compress(buffer, lookupBufferOffset) {
+    const LOOKUP_BUFFER_SIZE = 0x1000;
+
+    let bufferByteIndex = 0;
+    const lookupBuffer = new RingBuffer(LOOKUP_BUFFER_SIZE, (LOOKUP_BUFFER_SIZE + lookupBufferOffset) % LOOKUP_BUFFER_SIZE);
+    const outputBuffer = Buffer.alloc(buffer.length * 2); // compressed data should never be larger than the uncompressed data but just to be save we use a larger buffer
+    let outputBufferByteIndex = 0;
+
+    const readNextByte = () => {
+        return buffer.readUInt8(bufferByteIndex++);
+    };
+
+    const writeNextByte = (value) => {
+        if (outputBufferByteIndex === outputBuffer.length) {
+            throw 'Output buffer is full, cannot write more data';
+        }
+
+        outputBuffer.writeUInt8(value, outputBufferByteIndex++);
+    };
+
+    const encodeFlagByte = (flags) => {
+        let flagByte = 0;
+
+        if (flags.length !== 8) {
+            throw `invalid flags array`;
+        }
+
+        flags.forEach((flag, index) => {
+            if (flag) {
+                flagByte |= 1 << index;
+            }
+        });
+
+        return flagByte;
+    };
+
+    while (true) {
+        const flags = [];
+        // A temporary output buffer that holds all bytes while the flags byte is built
+        const outputBuffer = [];
+
+        // Every 8 flags we write t he flag byte and the output buffer to the output
+        while (flags.length < 8) {
+            // Read 18 bytes (the max number of bytes we can lookup)
+            const lookup = [];
+            for (let i = 0; i < 18; i++) {
+                const byte = readNextByte();
+                lookup.push(byte);
+            }
+            // Reset the read index, the previous reads were just lookaheads
+            bufferByteIndex -= 18;
+
+            // Check if we find the lookup data in the lookup buffer
+            // We start with the longest sequence and decrease the length step by step until we have a match or
+            // in the worst case no match at all
+            let index;
+            let length;
+            for (length = 18; length > 2; length--) {
+                // Take slices with decreasing lengths and see if we can find them in the lookup buffer
+                const lookupSlice = lookup.slice(0, length);
+                index = lookupBuffer.find(lookupSlice);
+
+                if (index > -1) {
+                    break;
+                }
+            }
+
+            if (index === -1) {
+                // Lookup was unsuccessful, we just copy the byte into the output
+                console.log('copy byte');
+                flags.push(true); // true === copy byte
+                const nextByte = readNextByte();
+                outputBuffer.push(nextByte);
+                lookupBuffer.appendUInt8(nextByte);
+            } else {
+                // Lookup success
+                console.log('lookup success', length, index);
+                flags.push(false); // false === lookup bytes
+                const lookup1 = index >> 4;
+                const lookup2 = ((index & 0x0F) << 4) | ((length - 3) & 0x0F);
+
+                outputBuffer.push(lookup1);
+                outputBuffer.push(lookup2);
+
+                for (let i = 0; i < length; i++) {
+                    lookupBuffer.appendUInt8(readNextByte());
+                }
+            }
+        }
+
+        // We have 8 flags, so we can now write the flags byte...
+        writeNextByte(encodeFlagByte(flags));
+        // ... and the pertaining data (data & lookup)
+        outputBuffer.forEach(byte => writeNextByte(byte));
+    }
+}
+
 /**
  * A section ends with a zero padding and a new section starts at a 2048-byte aligned index.
  * This only works if sections are padded with enough 0x00. If a sections fits better into the 2048 byte
@@ -479,6 +576,7 @@ function decompressFile(sections, fileName, targetDirectory) {
         if (compressed) {
             console.log(`Decompressing...`);
             const decompressedData = decompress(sectionData, lookupBufferOffset);
+            fs.writeFileSync(targetFileNameFull, sectionData);
             targetFileNameFull += '.decompressed';
             fs.writeFileSync(targetFileNameFull, decompressedData);
 
@@ -490,6 +588,8 @@ function decompressFile(sections, fileName, targetDirectory) {
             };
 
             console.log(`Decompression finished (compression rate: ${stats.compressionRate})`);
+
+            const recompressedData = compress(decompressedData, lookupBufferOffset);
         } else {
             fs.writeFileSync(targetFileNameFull, sectionData);
         }
