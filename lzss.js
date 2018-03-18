@@ -39,7 +39,7 @@ class RingBuffer {
         if (this.bufferLevel < this.buffer.length) {
             // Wrap offset around fillLevel
             const shift = this.bufferIndex - this.bufferLevel;
-            o = ((offset - shift) % this.bufferLevel) + shift + this.buffer.length;
+            o = ((offset - shift) % this.buffer.length % this.bufferLevel) + shift + this.buffer.length;
         }
         return this.buffer.readUInt8(o % this.buffer.length);
     }
