@@ -10,14 +10,8 @@ const S = require('string');
 const LOOKUP_BUFFER_SIZE = 0x1000;
 
 class RingBuffer {
-    constructor(bufferOrSize, initialIndex = 0) {
-        if (typeof bufferOrSize === 'number') {
-            this.buffer = Buffer.alloc(bufferOrSize);
-        } else if (bufferOrSize instanceof Buffer) {
-            this.buffer = bufferOrSize;
-        } else {
-            throw 'Unsupported input: ' + bufferOrSize;
-        }
+    constructor(size, initialIndex = 0) {
+        this.buffer = Buffer.alloc(size);
         this.bufferIndex = initialIndex;
         this.bufferLevel = 0;
     }
@@ -156,11 +150,11 @@ const logLookup = (position, lookupByte1, lookupByte2, index, length) => {
  * @param buffer
  * @returns {Buffer}
  */
-function decompress(buffer, lookupBufferOffset) {
+function decompress(buffer) {
     const VERBOSE = false;
 
     let bufferByteIndex = 0;
-    const lookupBuffer = new RingBuffer(LOOKUP_BUFFER_SIZE, (LOOKUP_BUFFER_SIZE + lookupBufferOffset) % LOOKUP_BUFFER_SIZE);
+    const lookupBuffer = new RingBuffer(LOOKUP_BUFFER_SIZE, LOOKUP_BUFFER_SIZE - 18);
     const outputBuffer = Buffer.alloc(buffer.length * 10); // the compression is probably way less effective so lets just hope this size is enough (else we have to implement dynamic resizing)
     let outputBufferByteIndex = 0;
 
@@ -259,11 +253,11 @@ function decompress(buffer, lookupBufferOffset) {
     return outputBuffer.slice(0, outputBufferByteIndex);
 }
 
-function compress(buffer, lookupBufferOffset) {
+function compress(buffer) {
     const VERBOSE = true;
 
     let bufferByteIndex = 0;
-    const lookupBuffer = new RingBuffer(LOOKUP_BUFFER_SIZE, (LOOKUP_BUFFER_SIZE + lookupBufferOffset) % LOOKUP_BUFFER_SIZE);
+    const lookupBuffer = new RingBuffer(LOOKUP_BUFFER_SIZE, LOOKUP_BUFFER_SIZE - 18);
     const outputBuffer = Buffer.alloc(buffer.length * 2); // compressed data should never be larger than the uncompressed data but just to be save we use a larger buffer
     let outputBufferByteIndex = 0;
 

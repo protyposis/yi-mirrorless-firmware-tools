@@ -250,14 +250,8 @@ function buildSectionDecompressionMetadata(sectionBreaks, sectionLength) {
         const sectionEnd = positions[index];
         const sectionNumber = sectionDecompressionMetadata.length;
         const compressed = sectionNumber > 1;
-        // All compressed sections have a -18 buffer offset, seems like there is an 18 byte header
-        // Actually, all sections start with compressed data, there seems not to be a 18 byte header... where do the
-        // 18 byte come from? Init data? Where does the init data come from?
-        // TODO why the 18 byte offset? -> PROBABLY RELATED TO THE MAX 18 BYTE LOOKUP SIZE
-        // TODO where are the sections and their lengths described?
-        const lookupBufferOffset = -18;
 
-        sectionDecompressionMetadata.push([sectionStart, sectionEnd, compressed, lookupBufferOffset]);
+        sectionDecompressionMetadata.push([sectionStart, sectionEnd, compressed]);
     });
 
     return sectionDecompressionMetadata;
@@ -266,7 +260,7 @@ function buildSectionDecompressionMetadata(sectionBreaks, sectionLength) {
 function decompressFile(sections, fileName, targetDirectory) {
     const data = fs.readFileSync(fileName);
 
-    sections.forEach(([start, end, compressed, lookupBufferOffset], index) => {
+    sections.forEach(([start, end, compressed], index) => {
         if (end === -1) {
             end = data.length;
         }
@@ -279,7 +273,7 @@ function decompressFile(sections, fileName, targetDirectory) {
 
         if (compressed) {
             console.log(`Decompressing...`);
-            const decompressedData = decompress(sectionData, lookupBufferOffset);
+            const decompressedData = decompress(sectionData);
             fs.writeFileSync(targetFileNameFull, sectionData);
             targetFileNameFull += '.decompressed';
             fs.writeFileSync(targetFileNameFull, decompressedData);
