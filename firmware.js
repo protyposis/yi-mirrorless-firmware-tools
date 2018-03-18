@@ -198,7 +198,7 @@ function unpack(fileName, targetDirectory) {
         fs.writeFileSync(outputSectionFileName, data);
         console.log(`Output file: ${sectionFileName}`);
 
-        // Slip first section into subsections
+        // Split first section into subsections
         if (sectionNumber === 0 && version) {
             const sectionBreaks = detectSectionBreaks(data);
             const sectionDecompressionMetadata = buildSectionDecompressionMetadata(sectionBreaks, data.length);
