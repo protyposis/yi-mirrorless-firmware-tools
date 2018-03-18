@@ -288,7 +288,13 @@ function compress(buffer) {
         const percent = Math.round(bufferByteIndex / buffer.length * 100);
         if (percent > lastPercent) {
             lastPercent = percent;
-            console.log(`${percent}%`);
+            if (percent > 1) {
+                process.stdout.write(`\r`);
+            }
+            process.stdout.write(`${percent}%`);
+            if (percent === 100) {
+                console.log(); // add line break
+            }
         }
 
         // Every 8 flags we write the flag byte and the output buffer to the output
