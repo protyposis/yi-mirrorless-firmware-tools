@@ -8,6 +8,10 @@
 const S = require('string');
 
 const LOOKUP_BUFFER_SIZE = 0x1000;
+const LOOKUP_DATA_MAX_INDEX = 0x0FFF;
+const LOOKUP_DATA_MAX_LENGTH = 0x0F;
+const LOOKUP_MIN_LENGTH = 3;
+const LOOKUP_MAX_LENGTH = LOOKUP_DATA_MAX_LENGTH + LOOKUP_MIN_LENGTH;
 
 class RingBuffer {
     constructor(size, initialIndex = 0) {
@@ -154,7 +158,7 @@ function decompress(buffer) {
     const VERBOSE = false;
 
     let bufferByteIndex = 0;
-    const lookupBuffer = new RingBuffer(LOOKUP_BUFFER_SIZE, LOOKUP_BUFFER_SIZE - 18);
+    const lookupBuffer = new RingBuffer(LOOKUP_BUFFER_SIZE, LOOKUP_BUFFER_SIZE - LOOKUP_MAX_LENGTH);
     const outputBuffer = Buffer.alloc(buffer.length * 10); // the compression is probably way less effective so lets just hope this size is enough (else we have to implement dynamic resizing)
     let outputBufferByteIndex = 0;
 
@@ -229,7 +233,7 @@ function decompress(buffer) {
                 // length is 4 bits, index 12 bits
                 // The bytes are ordered big endian
                 const lookupIndex = lookup1 | ((lookup2 & 0xF0) << 4);
-                const lookupLength = (lookup2 & 0x0F) + 3;
+                const lookupLength = (lookup2 & 0x0F) + LOOKUP_MIN_LENGTH;
 
                 if (VERBOSE) {
                     logLookup(bufferByteIndex - 1, lookup1, lookup2, lookupIndex, lookupLength);
@@ -257,7 +261,7 @@ function compress(buffer) {
     const VERBOSE = true;
 
     let bufferByteIndex = 0;
-    const lookupBuffer = new RingBuffer(LOOKUP_BUFFER_SIZE, LOOKUP_BUFFER_SIZE - 18);
+    const lookupBuffer = new RingBuffer(LOOKUP_BUFFER_SIZE, LOOKUP_BUFFER_SIZE - LOOKUP_MAX_LENGTH);
     const outputBuffer = Buffer.alloc(buffer.length * 2); // compressed data should never be larger than the uncompressed data but just to be save we use a larger buffer
     let outputBufferByteIndex = 0;
 
@@ -303,7 +307,7 @@ function compress(buffer) {
 
             // Read 18 bytes (the max number of bytes we can lookup)
             const lookup = [];
-            for (let i = 0; i < Math.min(18, remainingInputBytes); i++) {
+            for (let i = 0; i < Math.min(LOOKUP_MAX_LENGTH, remainingInputBytes); i++) {
                 const byte = readNextByte();
                 lookup.push(byte);
             }
@@ -315,7 +319,7 @@ function compress(buffer) {
             // in the worst case no match at all
             const [length, index] = lookupBuffer.find(lookup);
 
-            if (index === -1 || length < 3) {
+            if (index === -1 || length < LOOKUP_MIN_LENGTH) {
                 // Lookup was unsuccessful, we just copy the byte into the output
                 flags.push(true); // true === copy byte
                 const nextByte = readNextByte();
@@ -328,15 +332,15 @@ function compress(buffer) {
                 // Lookup success
                 flags.push(false); // false === lookup bytes
 
-                if (index > 0x0FFF) {
+                if (index > LOOKUP_DATA_MAX_INDEX) {
                     throw `invalid lookup index size ${index}`;
                 }
-                if (length - 3 > 0x0F) {
+                if (length > LOOKUP_MAX_LENGTH) {
                     throw `invalid lookup length ${length}`;
                 }
 
                 const lookup1 = index & 0xFF;
-                const lookup2 = ((index & 0xF00) >> 4) | ((length - 3) & 0x0F);
+                const lookup2 = ((index & 0xF00) >> 4) | ((length - LOOKUP_MIN_LENGTH) & 0x0F);
 
                 outputBuffer.push(lookup1);
                 outputBuffer.push(lookup2);
