@@ -258,7 +258,7 @@ function decompress(buffer) {
 }
 
 function compress(buffer) {
-    const VERBOSE = true;
+    const VERBOSE = false;
 
     let bufferByteIndex = 0;
     const lookupBuffer = new RingBuffer(LOOKUP_BUFFER_SIZE, LOOKUP_BUFFER_SIZE - LOOKUP_MAX_LENGTH);
