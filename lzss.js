@@ -134,6 +134,23 @@ const toHexString = (value, bytes) => {
     return S(value.toString(16)).padLeft(bytes * 2, '0').toString().toUpperCase();
 };
 
+const logFlags = (position, flagByte, flags) => {
+    const flagsByteBinaryString = toBitString(flagByte, 8);
+    const flagsString = flags.map((flag) => flag ? 'C' : 'L').reduce((a, b) => a + b);
+    console.log(`${position} flag: 0x${toHexString(flagByte, 1)}/${flagsByteBinaryString} => ${flagsString}`);
+};
+
+const logByteCopy = (position, byte) => {
+    console.log(`${position} copy: 0x${byte.toString(16)}`);
+};
+
+const logLookup = (position, lookupByte1, lookupByte2, index, length) => {
+    const lookup = lookupByte1 << 8 | lookupByte2;
+    console.log(`${position} lookup: 0x${toHexString(lookup, 2)}/${toBitString(lookup, 16)}`
+        + ` => ${toBitString(index, 12)} ${toBitString(length - 3, 4)}`
+        + ` => ${length}@${index}`);
+};
+
 /**
  * Decompresses compressed data in section 0 of the firmware.
  * @param buffer
@@ -194,10 +211,7 @@ function decompress(buffer, lookupBufferOffset) {
         const flags = decodeFlagByte(flagByte);
 
         if (VERBOSE) {
-            const flagsByteBinaryString = toBitString(flagByte, 8);
-            const flagsString = flags.map((flag) => flag ? 'C' : 'L').reduce((a, b) => a + b);
-            console.log(`${bufferByteIndex - 1} flag: 0x${toHexString(flagByte, 1)}/${flagsByteBinaryString} => ${flagsString}`
-                + (flagByte === 0xFF ? ' !!!!!' : ''));
+            logFlags(bufferByteIndex - 1, flagByte, flags);
         }
 
         for (let copyByte of flags) {
@@ -206,7 +220,7 @@ function decompress(buffer, lookupBufferOffset) {
                 const byte = readNextByte();
 
                 if (VERBOSE) {
-                    console.log(`${bufferByteIndex - 1} copy: 0x${byte.toString(16)}`);
+                    logByteCopy(bufferByteIndex - 1, byte);
                 }
 
                 // Write byte into output and lookup buffer
@@ -216,7 +230,7 @@ function decompress(buffer, lookupBufferOffset) {
                 // Read lookup data bytes (2 bytes)
                 const lookup1 = readNextByte();
                 const lookup2 = readNextByte();
-                const lookup = lookup1 << 8 | lookup2;
+
 
                 // length is 4 bits, index 12 bits
                 // The bytes are ordered big endian
@@ -224,9 +238,7 @@ function decompress(buffer, lookupBufferOffset) {
                 const lookupLength = (lookup2 & 0x0F) + 3;
 
                 if (VERBOSE) {
-                    console.log(`${bufferByteIndex - 2} lookup: 0x${toHexString(lookup, 2)}/${toBitString(lookup, 16)}`
-                        + ` => ${toBitString(lookupIndex, 12)} ${toBitString(lookupLength - 3, 4)}`
-                        + ` => ${lookupLength}@${lookupIndex}`);
+                    logLookup(bufferByteIndex - 1, lookup1, lookup2, lookupIndex, lookupLength);
                 }
 
                 // Read bytes from lookup buffer
@@ -248,7 +260,7 @@ function decompress(buffer, lookupBufferOffset) {
 }
 
 function compress(buffer, lookupBufferOffset) {
-    const VERBOSE = false;
+    const VERBOSE = true;
 
     let bufferByteIndex = 0;
     const lookupBuffer = new RingBuffer(LOOKUP_BUFFER_SIZE, (LOOKUP_BUFFER_SIZE + lookupBufferOffset) % LOOKUP_BUFFER_SIZE);
@@ -316,7 +328,7 @@ function compress(buffer, lookupBufferOffset) {
                 outputBuffer.push(nextByte);
                 lookupBuffer.appendUInt8(nextByte);
                 if (VERBOSE) {
-                    console.log(`copy byte 0x${nextByte.toString(16)}`);
+                    logByteCopy(outputBufferByteIndex + outputBuffer.length, nextByte);
                 }
             } else {
                 // Lookup success
@@ -340,7 +352,7 @@ function compress(buffer, lookupBufferOffset) {
                 }
 
                 if (VERBOSE) {
-                    console.log(`lookup success 0x${toHexString(lookup1 << 8 | lookup2, 2)} ${length}@${index} `);
+                    logLookup(outputBufferByteIndex + outputBuffer.length - 1, lookup1, lookup2, index, length);
                 }
             }
         }
@@ -348,9 +360,7 @@ function compress(buffer, lookupBufferOffset) {
         // We have 8 flags, so we can now write the flags byte...
         const flagByte = encodeFlagByte(flags);
         if (VERBOSE) {
-            const flagsByteBinaryString = toBitString(flagByte, 8);
-            const flagsString = flags.map((flag) => flag ? 'C' : 'L').reduce((a, b) => a + b);
-            console.log(`flag: 0x${toHexString(flagByte, 1)}/${flagsByteBinaryString} => ${flagsString}`);
+            logFlags(outputBufferByteIndex, flagByte, flags);
         }
         writeNextByte(flagByte);
         // ... and the pertaining data (data & lookup)
