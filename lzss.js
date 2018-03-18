@@ -345,6 +345,8 @@ function compress(buffer, lookupBufferOffset) {
         // ... and the pertaining data (data & lookup)
         outputBuffer.forEach(byte => writeNextByte(byte));
     }
+
+    return outputBuffer.slice(0, outputBufferByteIndex);
 }
 
 exports.decompress = decompress;
