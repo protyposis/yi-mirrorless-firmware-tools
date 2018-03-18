@@ -274,14 +274,16 @@ function compress(buffer, lookupBufferOffset) {
 
         // Every 8 flags we write t he flag byte and the output buffer to the output
         while (flags.length < 8) {
+            const remainingInputBytes = buffer.length - bufferByteIndex;
+
             // Read 18 bytes (the max number of bytes we can lookup)
             const lookup = [];
-            for (let i = 0; i < 18; i++) {
+            for (let i = 0; i < Math.min(18, remainingInputBytes); i++) {
                 const byte = readNextByte();
                 lookup.push(byte);
             }
             // Reset the read index, the previous reads were just lookaheads
-            bufferByteIndex -= 18;
+            bufferByteIndex -= lookup.length;
 
             // Check if we find the lookup data in the lookup buffer
             // We start with the longest sequence and decrease the length step by step until we have a match or
