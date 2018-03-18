@@ -267,7 +267,7 @@ function compress(buffer, lookupBufferOffset) {
         outputBuffer.writeUInt8(value, outputBufferByteIndex++);
     };
 
-    while (true) {
+    while (bufferByteIndex < buffer.length) {
         const flags = [];
         // A temporary output buffer that holds all bytes while the flags byte is built
         const outputBuffer = [];
