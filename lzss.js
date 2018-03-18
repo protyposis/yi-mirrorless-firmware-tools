@@ -267,10 +267,19 @@ function compress(buffer, lookupBufferOffset) {
         outputBuffer.writeUInt8(value, outputBufferByteIndex++);
     };
 
+    let lastPercent = 0;
+
     while (bufferByteIndex < buffer.length) {
         const flags = [];
         // A temporary output buffer that holds all bytes while the flags byte is built
         const outputBuffer = [];
+
+        // Calculate progress
+        const percent = Math.round(bufferByteIndex / buffer.length * 100);
+        if (percent > lastPercent) {
+            lastPercent = percent;
+            console.log(`${percent}%`);
+        }
 
         // Every 8 flags we write the flag byte and the output buffer to the output
         while (flags.length < 8) {
