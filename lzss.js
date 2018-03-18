@@ -282,8 +282,16 @@ function compress(buffer, lookupBufferOffset) {
                 // Lookup success
                 // console.log('lookup success', length, index);
                 flags.push(false); // false === lookup bytes
-                const lookup1 = index >> 4;
-                const lookup2 = ((index & 0x0F) << 4) | ((length - 3) & 0x0F);
+
+                if (index > 0x0FFF) {
+                    throw `invalid lookup index size ${index}`;
+                }
+                if (length - 3 > 0x0F) {
+                    throw `invalid lookup length ${length}`;
+                }
+
+                const lookup1 = index & 0xFF;
+                const lookup2 = ((index & 0xF00) >> 4) | ((length - 3) & 0x0F);
 
                 outputBuffer.push(lookup1);
                 outputBuffer.push(lookup2);
