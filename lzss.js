@@ -32,14 +32,14 @@ class RingBuffer {
         return this.bufferIndex;
     }
 
-    readUInt8(offset) {
-        let o = offset;
+    readUInt8(index) {
+        let wrappedIndex = index;
         if (this.bufferLevel < this.buffer.length) {
             // Wrap offset around fillLevel
             const shift = this.bufferIndex - this.bufferLevel;
-            o = ((offset - shift) % this.buffer.length % this.bufferLevel) + shift + this.buffer.length;
+            wrappedIndex = ((index - shift) % this.buffer.length % this.bufferLevel) + shift + this.buffer.length;
         }
-        return this.buffer.readUInt8(o % this.buffer.length);
+        return this.buffer.readUInt8(wrappedIndex % this.buffer.length);
     }
 
     appendUInt8(value) {
