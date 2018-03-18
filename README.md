@@ -72,7 +72,6 @@ When the YI Camera app is paired with the camera, the camera sets a Wifi passwor
 
 ### Next steps
 
- * Determine where the first 18 byte of the compressed sections come from
  * Write packer to create flashable FW file from unpacked/modified data
  * Identify partition table format and decode
  * Disassemble first section
