@@ -3,6 +3,8 @@
  * Author: Mario Guggenberger <mg@protyposis.net>
  * Licensed under the GPLv3
  */
+'use strict';
+
 const LOOKUP_BUFFER_SIZE = 0x1000;
 
 class RingBuffer {
