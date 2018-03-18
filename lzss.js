@@ -58,22 +58,29 @@ class RingBuffer {
         const check = (x) => {
             for (let y = 1; y < length; y++) {
                 if (this.buffer.readUInt8((x + y) % this.buffer.length) !== byteArray[y]) {
-                    return false;
+                    return y - 1;
                 }
             }
 
-            return true;
+            return 0;
         };
+
+        let maxLength = 0;
+        let maxLengthIndex = -1;
 
         for (let x = 0; x < this.buffer.length; x++) {
             const searchIndex = (this.bufferIndex - x + this.buffer.length) % this.buffer.length;
             // Check the first value and if it matched, check all remaining ones
-            if (this.buffer.readUInt8(searchIndex) === byteArray[0] && check(searchIndex)) {
-                return searchIndex;
+            if (this.buffer.readUInt8(searchIndex) === byteArray[0]) {
+                const length = check(searchIndex) + 1;
+                if (length > maxLength) {
+                    maxLength = length;
+                    maxLengthIndex = searchIndex;
+                }
             }
         }
 
-        return -1;
+        return [maxLength, maxLengthIndex];
     }
 }
 
@@ -262,18 +269,9 @@ function compress(buffer, lookupBufferOffset) {
             // Check if we find the lookup data in the lookup buffer
             // We start with the longest sequence and decrease the length step by step until we have a match or
             // in the worst case no match at all
-            let index;
-            let length;
-            for (length = 18; length > 2; length--) {
-                // Take slices with decreasing lengths and see if we can find them in the lookup buffer
-                index = lookupBuffer.find(lookup, length);
+            const [length, index] = lookupBuffer.find(lookup);
 
-                if (index > -1) {
-                    break;
-                }
-            }
-
-            if (index === -1) {
+            if (index === -1 || length < 3) {
                 // Lookup was unsuccessful, we just copy the byte into the output
                 // console.log('copy byte');
                 flags.push(true); // true === copy byte
