@@ -233,12 +233,12 @@ function decompress(buffer, lookupBufferOffset) {
                 for (let x = 0; x < lookupLength; x++) {
                     let bufferByte = lookupBuffer.readUInt8(lookupIndex + x);
                     lookupBytes.push(bufferByte);
-
-                    // Write bytes into output and lookup buffer
-                    // The lookup buffer must be written instantly (not after the lookup is read)
-                    lookupBuffer.appendUInt8(bufferByte);
-                    writeNextByte(bufferByte);
                 }
+
+                lookupBytes.forEach(byte => {
+                    lookupBuffer.appendUInt8(byte);
+                    writeNextByte(byte);
+                });
             }
         }
     }
