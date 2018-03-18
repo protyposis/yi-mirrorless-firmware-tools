@@ -292,9 +292,6 @@ function decompressFile(sections, fileName, targetDirectory) {
             };
 
             console.log(`Decompression finished (compression rate: ${stats.compressionRate})`);
-
-            const recompressedData = compress(decompressedData, lookupBufferOffset);
-            fs.writeFileSync(targetFileNameFull + '.recompressed', recompressedData);
         } else {
             fs.writeFileSync(targetFileNameFull, sectionData);
         }
