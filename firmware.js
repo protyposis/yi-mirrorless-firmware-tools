@@ -9,6 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const S = require('string');
 const {versions} = require('./versions');
+const {decompress, compress} = require('./lzss');
 
 const FW_SECTION_HEADER_LENGTH = 0x100;
 
@@ -197,213 +198,25 @@ function unpack(fileName, targetDirectory) {
         fs.writeFileSync(outputSectionFileName, data);
         console.log(`Output file: ${sectionFileName}`);
 
-        // Slip first section into subsections
+        // Split first section into subsections
         if (sectionNumber === 0 && version) {
-            const sectionBreaks = detectSectionBreaks(data);
-            const sectionDecompressionMetadata = buildSectionDecompressionMetadata(sectionBreaks, data.length);
-            decompressFile(sectionDecompressionMetadata, outputSectionFileName, targetDirectory);
+            unpackSection(data, (index, start, sectionData, processedSectionData, compressed) => {
+                const targetFileName = path.basename(outputSectionFileName) + '.' + S(start).padLeft(8, '0');
+                let targetFileNameFull = path.join(targetDirectory, targetFileName);
+
+                if (compressed) {
+                    fs.writeFileSync(targetFileNameFull, sectionData);
+                    targetFileNameFull += '.decompressed';
+                    fs.writeFileSync(targetFileNameFull, processedSectionData);
+                }
+                else {
+                    fs.writeFileSync(targetFileNameFull, sectionData);
+                }
+
+                console.log(`Output: ${targetFileNameFull}`);
+            });
         }
     });
-}
-
-class RingBuffer {
-    constructor(bufferOrSize, initialIndex = 0) {
-        if (typeof bufferOrSize === 'number') {
-            this.buffer = Buffer.alloc(bufferOrSize);
-        } else if (bufferOrSize instanceof Buffer) {
-            this.buffer = bufferOrSize;
-        } else {
-            throw 'Unsupported input: ' + bufferOrSize;
-        }
-        this.bufferIndex = initialIndex;
-    }
-
-    get length() {
-        return this.buffer.length;
-    }
-
-    get innerBuffer() {
-        return this.buffer;
-    }
-
-    get index() {
-        return this.bufferIndex;
-    }
-
-    readUInt8(offset) {
-        return this.buffer.readUInt8(offset % this.buffer.length);
-    }
-
-    appendUInt8(value) {
-        this.buffer.writeUInt8(value, this.bufferIndex);
-        this.bufferIndex = ++this.bufferIndex % this.buffer.length;
-    }
-
-    toString(encoding) {
-        return this.buffer.toString(encoding, this.bufferIndex, this.buffer.length)
-            + this.buffer.toString(encoding, 0, this.bufferIndex);
-    }
-
-    getSequentialBuffer() {
-        return Buffer.concat([
-            this.buffer.slice(this.bufferIndex, this.buffer.length),
-            this.buffer.slice(0, this.bufferIndex),
-        ]);
-    }
-
-    find(byteArray) {
-        const check = (x) => {
-            for (let y = 1; y < byteArray.length; y++) {
-                if (this.buffer.readUInt8((x + y) % this.buffer.length) !== byteArray[y]) {
-                    return false;
-                }
-            }
-
-            return true;
-        };
-
-        for (let x = 0; x < this.buffer.length; x++) {
-            // Check the first value and if it matched, check all remaining ones
-            if (this.buffer.readUInt8(x) === byteArray[0] && check(x)) {
-                return x;
-            }
-        }
-
-        return -1;
-    }
-}
-
-/**
- * Decompresses compressed data in section 0 of the firmware.
- * @param buffer
- * @returns {Buffer}
- */
-function decompress(buffer, lookupBufferOffset) {
-    const LOOKUP_BUFFER_SIZE = 0x1000;
-    const VERBOSE = false;
-
-    let bufferByteIndex = 0;
-    const lookupBuffer = new RingBuffer(LOOKUP_BUFFER_SIZE, (LOOKUP_BUFFER_SIZE + lookupBufferOffset) % LOOKUP_BUFFER_SIZE);
-    const outputBuffer = Buffer.alloc(buffer.length * 10); // the compression is probably way less effective so lets just hope this size is enough (else we have to implement dynamic resizing)
-    let outputBufferByteIndex = 0;
-
-    const readNextByte = () => {
-        return buffer.readUInt8(bufferByteIndex++);
-    };
-
-    const writeNextByte = (value) => {
-        if (outputBufferByteIndex === outputBuffer.length) {
-            throw 'Output buffer is full, cannot write more data';
-        }
-
-        outputBuffer.writeUInt8(value, outputBufferByteIndex++);
-    };
-
-    const decodeFlagByte = (flagByte) => {
-        const flags = [];
-
-        for (let bitIndex = 0; bitIndex < 8; bitIndex++) {
-            const copyByte = (flagByte >> bitIndex) & 1 === 1;
-            flags.push(copyByte);
-        }
-
-        return flags;
-    };
-
-    const toBitString = (value, bits) => {
-        return S(value.toString(2)).padLeft(bits, '0');
-    };
-
-    const toHexString = (value, bytes) => {
-        return S(value.toString(16)).padLeft(bytes * 2, '0').toString().toUpperCase();
-    };
-
-    while (bufferByteIndex < buffer.length) {
-        // Read the flag byte, whose bits are flags that tell which bytes are to be copied directly, and which bytes
-        // are lookup information.
-        const flagByte = readNextByte();
-
-        // Detect end of section
-        // All sections are padded to 2048 byte chunks with 0x00
-        // A 0x00 flag byte with 8 zero lookups is highly unlikely, so we use that for now to detect the section end
-        // If a section fits better into the 2048 byte alignment, this detection fails
-        // TODO find out how we can determine the actual end (where the length of a section is stored)
-        if (flagByte === 0x00) {
-            const oldBufferByteIndex = bufferByteIndex;
-            let zeroCount = 0;
-
-            for (let x = 0; x < 16; x++) {
-                if (readNextByte() === 0x00) {
-                    zeroCount++;
-                } else {
-                    break;
-                }
-            }
-
-            if (zeroCount === 16) {
-                console.log(`Section end detected at ${bufferByteIndex - 9}`);
-                break;
-            }
-
-            // End has not been detected, so restore the old buffer index and continue processing the data
-            bufferByteIndex = oldBufferByteIndex;
-        }
-
-        // Parse the flag byte into a boolean flag array
-        const flags = decodeFlagByte(flagByte);
-
-        if (VERBOSE) {
-            const flagsByteBinaryString = toBitString(flagByte, 8);
-            const flagsString = flags.map((flag) => flag ? 'C' : 'L').reduce((a, b) => a + b);
-            console.log(`${bufferByteIndex - 1} flag: 0x${toHexString(flagByte, 1)}/${flagsByteBinaryString} => ${flagsString}`
-                + (flagByte === 0xFF ? ' !!!!!' : ''));
-        }
-
-        for (let copyByte of flags) {
-            if (copyByte) {
-                // Just copy the byte into the output
-                const byte = readNextByte();
-
-                if (VERBOSE) {
-                    console.log(`${bufferByteIndex - 1} copy: 0x${byte.toString(16)}`);
-                }
-
-                // Write byte into output and lookup buffer
-                writeNextByte(byte);
-                lookupBuffer.appendUInt8(byte);
-            } else {
-                // Read lookup data bytes (2 bytes)
-                const lookup1 = readNextByte();
-                const lookup2 = readNextByte();
-                const lookup = lookup1 << 8 | lookup2;
-
-                // length is 4 bits, index 12 bits
-                // The bytes are ordered big endian
-                const lookupIndex = lookup1 | ((lookup2 & 0xF0) << 4);
-                const lookupLength = (lookup2 & 0x0F) + 3;
-
-                if (VERBOSE) {
-                    console.log(`${bufferByteIndex - 2} lookup: 0x${toHexString(lookup, 2)}/${toBitString(lookup, 16)}`
-                        + ` => ${toBitString(lookupIndex, 12)} ${toBitString(lookupLength - 3, 4)}`
-                        + ` => ${lookupLength}@${lookupIndex}`);
-                }
-
-                // Read bytes from lookup buffer
-                const lookupBytes = [];
-                for (let x = 0; x < lookupLength; x++) {
-                    let bufferByte = lookupBuffer.readUInt8(lookupIndex + x);
-                    lookupBytes.push(bufferByte);
-
-                    // Write bytes into output and lookup buffer
-                    // The lookup buffer must be written instantly (not after the lookup is read)
-                    lookupBuffer.appendUInt8(bufferByte);
-                    writeNextByte(bufferByte);
-                }
-            }
-        }
-    }
-
-    return outputBuffer.slice(0, outputBufferByteIndex);
 }
 
 /**
@@ -449,52 +262,38 @@ function buildSectionDecompressionMetadata(sectionBreaks, sectionLength) {
         const sectionEnd = positions[index];
         const sectionNumber = sectionDecompressionMetadata.length;
         const compressed = sectionNumber > 1;
-        // All compressed sections have a -18 buffer offset, seems like there is an 18 byte header
-        // Actually, all sections start with compressed data, there seems not to be a 18 byte header... where do the
-        // 18 byte come from? Init data? Where does the init data come from?
-        // TODO why the 18 byte offset?
-        // TODO where are the sections and their lengths described?
-        const lookupBufferOffset = -18;
 
-        sectionDecompressionMetadata.push([sectionStart, sectionEnd, compressed, lookupBufferOffset]);
+        sectionDecompressionMetadata.push([sectionStart, sectionEnd, compressed]);
     });
 
     return sectionDecompressionMetadata;
 }
 
-function decompressFile(sections, fileName, targetDirectory) {
-    const data = fs.readFileSync(fileName);
+function unpackSection(data, sectionDecompressedCallback) {
+    const sectionBreaks = detectSectionBreaks(data);
+    const sectionDecompressionMetadata = buildSectionDecompressionMetadata(sectionBreaks, data.length);
 
-    sections.forEach(([start, end, compressed, lookupBufferOffset], index) => {
-        if (end === -1) {
-            end = data.length;
-        }
-
+    sectionDecompressionMetadata.forEach(([start, end, compressed], index) => {
         const sectionData = data.slice(start, end);
-        const targetFileName = path.basename(fileName) + '.' + S(start).padLeft(8, '0');
-        let targetFileNameFull = path.join(targetDirectory, targetFileName);
-
+        let processedSectionData;
         console.log(`Section ${index}: ${start}-${end}`);
 
         if (compressed) {
             console.log(`Decompressing...`);
-            const decompressedData = decompress(sectionData, lookupBufferOffset);
-            targetFileNameFull += '.decompressed';
-            fs.writeFileSync(targetFileNameFull, decompressedData);
+            processedSectionData = decompress(sectionData);
 
             const stats = {
                 inputSize: sectionData.length,
-                outputSize: decompressedData.length,
-                compressionRate: decompressedData.length / sectionData.length,
-                outputFile: targetFileNameFull,
+                outputSize: processedSectionData.length,
+                compressionRate: processedSectionData.length / sectionData.length,
             };
 
             console.log(`Decompression finished (compression rate: ${stats.compressionRate})`);
         } else {
-            fs.writeFileSync(targetFileNameFull, sectionData);
+            processedSectionData = sectionData;
         }
 
-        console.log(`Output: ${targetFileNameFull}`);
+        sectionDecompressedCallback(index, start, sectionData, processedSectionData, compressed);
     });
 }
 
@@ -543,5 +342,47 @@ function flipRegion(fileName, targetDirectory) {
     console.info(`You can now rename the file '${targetFileBaseName}' to 'firmware.bin' and upload it to the camera`);
 }
 
+function test(fileName) {
+    readSections(fileName, (sectionNumber, rawHeader, parsedHeader, version, data) => {
+        console.log(`Section ${sectionNumber}`);
+
+        // Split first section into subsections
+        if (sectionNumber === 0 && version) {
+            unpackSection(data, (index, start, sectionData, processedSectionData, compressed) => {
+                console.log(`Section ${sectionNumber}.${index}`);
+
+                if (compressed) {
+                    const recompressedData = compress(processedSectionData);
+                    const redecompressedData = decompress(recompressedData);
+
+                    const l1 = processedSectionData.length;
+                    const l2 = redecompressedData.length;
+
+                    console.log(`Stats for decompressed -> compressed -> decompressed:`)
+                    if (l1 === l2) {
+                        console.log(`lengths match :)`);
+                    } else {
+                        console.log(`lengths do not match by ${l1 - l2} bytes`);
+                    }
+
+                    let diffByteCount = 0;
+                    for (let i = 0; i < Math.min(l1, l2); i++) {
+                        if (processedSectionData.readUInt8(i) !== redecompressedData.readUInt8(i)) {
+                            diffByteCount++;
+                        }
+                    }
+
+                    if (diffByteCount === 0) {
+                        console.log(`data match :)`);
+                    } else {
+                        console.log(`data does not match by ${diffByteCount} bytes`);
+                    }
+                }
+            });
+        }
+    });
+}
+
 exports.unpack = unpack;
 exports.flipRegion = flipRegion;
+exports.test = test;
