@@ -286,9 +286,11 @@ function compress(buffer, lookupBufferOffset) {
             const remainingInputBytes = buffer.length - bufferByteIndex;
 
             if (remainingInputBytes === 0) {
-                // Fill up flags and exit encoding loop
+                // Fill up flags & write buffer and exit compression loop
+                console.log(`early end detected`);
                 while(flags.length < 8) {
                     flags.push(true);
+                    outputBuffer.push(0);
                 }
                 break;
             }
