@@ -342,5 +342,47 @@ function flipRegion(fileName, targetDirectory) {
     console.info(`You can now rename the file '${targetFileBaseName}' to 'firmware.bin' and upload it to the camera`);
 }
 
+function test(fileName) {
+    readSections(fileName, (sectionNumber, rawHeader, parsedHeader, version, data) => {
+        console.log(`Section ${sectionNumber}`);
+
+        // Split first section into subsections
+        if (sectionNumber === 0 && version) {
+            unpackSection(data, (index, start, sectionData, processedSectionData, compressed) => {
+                console.log(`Section ${sectionNumber}.${index}`);
+
+                if (compressed) {
+                    const recompressedData = compress(processedSectionData);
+                    const redecompressedData = decompress(recompressedData);
+
+                    const l1 = processedSectionData.length;
+                    const l2 = redecompressedData.length;
+
+                    console.log(`Stats for decompressed -> compressed -> decompressed:`)
+                    if (l1 === l2) {
+                        console.log(`lengths match :)`);
+                    } else {
+                        console.log(`lengths do not match by ${l1 - l2} bytes`);
+                    }
+
+                    let diffByteCount = 0;
+                    for (let i = 0; i < Math.min(l1, l2); i++) {
+                        if (processedSectionData.readUInt8(i) !== redecompressedData.readUInt8(i)) {
+                            diffByteCount++;
+                        }
+                    }
+
+                    if (diffByteCount === 0) {
+                        console.log(`data match :)`);
+                    } else {
+                        console.log(`data does not match by ${diffByteCount} bytes`);
+                    }
+                }
+            });
+        }
+    });
+}
+
 exports.unpack = unpack;
 exports.flipRegion = flipRegion;
+exports.test = test;
