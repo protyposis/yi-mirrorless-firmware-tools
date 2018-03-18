@@ -200,9 +200,21 @@ function unpack(fileName, targetDirectory) {
 
         // Split first section into subsections
         if (sectionNumber === 0 && version) {
-            const sectionBreaks = detectSectionBreaks(data);
-            const sectionDecompressionMetadata = buildSectionDecompressionMetadata(sectionBreaks, data.length);
-            decompressFile(sectionDecompressionMetadata, outputSectionFileName, targetDirectory);
+            unpackSection(data, (index, start, sectionData, processedSectionData, compressed) => {
+                const targetFileName = path.basename(outputSectionFileName) + '.' + S(start).padLeft(8, '0');
+                let targetFileNameFull = path.join(targetDirectory, targetFileName);
+
+                if (compressed) {
+                    fs.writeFileSync(targetFileNameFull, sectionData);
+                    targetFileNameFull += '.decompressed';
+                    fs.writeFileSync(targetFileNameFull, processedSectionData);
+                }
+                else {
+                    fs.writeFileSync(targetFileNameFull, sectionData);
+                }
+
+                console.log(`Output: ${targetFileNameFull}`);
+            });
         }
     });
 }
@@ -257,40 +269,31 @@ function buildSectionDecompressionMetadata(sectionBreaks, sectionLength) {
     return sectionDecompressionMetadata;
 }
 
-function decompressFile(sections, fileName, targetDirectory) {
-    const data = fs.readFileSync(fileName);
+function unpackSection(data, sectionDecompressedCallback) {
+    const sectionBreaks = detectSectionBreaks(data);
+    const sectionDecompressionMetadata = buildSectionDecompressionMetadata(sectionBreaks, data.length);
 
-    sections.forEach(([start, end, compressed], index) => {
-        if (end === -1) {
-            end = data.length;
-        }
-
+    sectionDecompressionMetadata.forEach(([start, end, compressed], index) => {
         const sectionData = data.slice(start, end);
-        const targetFileName = path.basename(fileName) + '.' + S(start).padLeft(8, '0');
-        let targetFileNameFull = path.join(targetDirectory, targetFileName);
-
+        let processedSectionData;
         console.log(`Section ${index}: ${start}-${end}`);
 
         if (compressed) {
             console.log(`Decompressing...`);
-            const decompressedData = decompress(sectionData);
-            fs.writeFileSync(targetFileNameFull, sectionData);
-            targetFileNameFull += '.decompressed';
-            fs.writeFileSync(targetFileNameFull, decompressedData);
+            processedSectionData = decompress(sectionData);
 
             const stats = {
                 inputSize: sectionData.length,
-                outputSize: decompressedData.length,
-                compressionRate: decompressedData.length / sectionData.length,
-                outputFile: targetFileNameFull,
+                outputSize: processedSectionData.length,
+                compressionRate: processedSectionData.length / sectionData.length,
             };
 
             console.log(`Decompression finished (compression rate: ${stats.compressionRate})`);
         } else {
-            fs.writeFileSync(targetFileNameFull, sectionData);
+            processedSectionData = sectionData;
         }
 
-        console.log(`Output: ${targetFileNameFull}`);
+        sectionDecompressedCallback(index, start, sectionData, processedSectionData, compressed);
     });
 }
 
