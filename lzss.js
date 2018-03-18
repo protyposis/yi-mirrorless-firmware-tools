@@ -19,6 +19,7 @@ class RingBuffer {
             throw 'Unsupported input: ' + bufferOrSize;
         }
         this.bufferIndex = initialIndex;
+        this.bufferLevel = 0;
     }
 
     get length() {
@@ -34,12 +35,21 @@ class RingBuffer {
     }
 
     readUInt8(offset) {
-        return this.buffer.readUInt8(offset % this.buffer.length);
+        let o = offset;
+        if (this.bufferLevel < this.buffer.length) {
+            // Wrap offset around fillLevel
+            const shift = this.bufferIndex - this.bufferLevel;
+            o = ((offset - shift) % this.bufferLevel) + shift + this.buffer.length;
+        }
+        return this.buffer.readUInt8(o % this.buffer.length);
     }
 
     appendUInt8(value) {
         this.buffer.writeUInt8(value, this.bufferIndex);
         this.bufferIndex = ++this.bufferIndex % this.buffer.length;
+        if (this.bufferLevel < this.buffer.length) {
+            this.bufferLevel++;
+        }
     }
 
     toString(encoding) {
@@ -61,7 +71,7 @@ class RingBuffer {
 
         const check = (x) => {
             for (let y = 1; y < length; y++) {
-                if (this.buffer.readUInt8((x + y) % this.buffer.length) !== byteArray[y]) {
+                if (this.readUInt8((x + y) % this.buffer.length) !== byteArray[y]) {
                     return y - 1;
                 }
             }
@@ -72,10 +82,10 @@ class RingBuffer {
         let maxLength = 0;
         let maxLengthIndex = -1;
 
-        for (let x = 0; x < this.buffer.length; x++) {
+        for (let x = 0; x < this.bufferLevel; x++) {
             const searchIndex = (this.bufferIndex - x + this.buffer.length) % this.buffer.length;
             // Check the first value and if it matched, check all remaining ones
-            if (this.buffer.readUInt8(searchIndex) === byteArray[0]) {
+            if (this.readUInt8(searchIndex) === byteArray[0]) {
                 const length = check(searchIndex) + 1;
                 if (length > maxLength) {
                     maxLength = length;
