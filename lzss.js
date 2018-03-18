@@ -76,7 +76,7 @@ class RingBuffer {
                 }
             }
 
-            return 0;
+            return length - 1;
         };
 
         let maxLength = 0;
