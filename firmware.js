@@ -12,6 +12,7 @@ const {versions} = require('./versions');
 const {decompress, compress} = require('./lzss');
 
 const FW_SECTION_HEADER_LENGTH = 0x100;
+const METADATA_FILE_EXTENSION = `.unpack.json`;
 
 function parseHeader(headerString) {
     let parsedHeader = {
@@ -188,6 +189,12 @@ function readSections(fileName, sectionReadCallback) {
 }
 
 function unpack(fileName, targetDirectory) {
+    const metadata = {
+        version: 0,
+        filename: path.basename(fileName),
+        sections: [],
+    };
+
     readSections(fileName, (sectionNumber, rawHeader, parsedHeader, version, data) => {
         // Write section to file
         const sectionFileName = path.basename(fileName)
@@ -198,25 +205,47 @@ function unpack(fileName, targetDirectory) {
         fs.writeFileSync(outputSectionFileName, data);
         console.log(`Output file: ${sectionFileName}`);
 
+        const subsectionData = [];
         // Split first section into subsections
         if (sectionNumber === 0 && version) {
             unpackSection(data, (index, start, sectionData, processedSectionData, compressed) => {
                 const targetFileName = path.basename(outputSectionFileName) + '.' + S(start).padLeft(8, '0');
-                let targetFileNameFull = path.join(targetDirectory, targetFileName);
+                const targetFileNameDecompressed = targetFileName + '.decompressed';
+                const targetFileNameFull = path.join(targetDirectory, targetFileName);
+                const targetFileNameFullDecompressed = path.join(targetDirectory, targetFileNameDecompressed);
 
                 if (compressed) {
                     fs.writeFileSync(targetFileNameFull, sectionData);
-                    targetFileNameFull += '.decompressed';
-                    fs.writeFileSync(targetFileNameFull, processedSectionData);
+                    fs.writeFileSync(targetFileNameFullDecompressed, processedSectionData);
                 }
                 else {
                     fs.writeFileSync(targetFileNameFull, sectionData);
                 }
 
                 console.log(`Output: ${targetFileNameFull}`);
+
+                subsectionData.push({
+                    filename: targetFileName,
+                    compressed: compressed,
+                    filenameDecompressed: compressed ? targetFileNameDecompressed : undefined,
+                })
             });
         }
+
+        metadata.sections.push({
+            filename: sectionFileName,
+            rawHeader: rawHeader,
+            parsedHeader: parsedHeader,
+            subsections: subsectionData,
+        });
     });
+
+    const sectionDataFileName = path.basename(fileName) + METADATA_FILE_EXTENSION;
+    const sectionDataFileNameFull = path.join(targetDirectory, sectionDataFileName);
+    fs.writeFileSync(sectionDataFileNameFull, JSON.stringify(metadata, null, 2));
+
+    console.log(`Wrote metadata file: ${sectionDataFileName} (required for repacking!)`);
+    console.log(`Unpacking finished!`);
 }
 
 /**
