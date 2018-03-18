@@ -6,6 +6,7 @@
   "scripts": {
     "test": "node index.js test",
     "unpack": "node index.js unpack",
+    "repack": "node index.js repack",
     "flipregion": "node index.js flipregion",
   },
   "author": "Mario Guggenberger <mg@protyposis.net>",

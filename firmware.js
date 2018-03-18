@@ -12,7 +12,8 @@ const {versions} = require('./versions');
 const {decompress, compress} = require('./lzss');
 
 const FW_SECTION_HEADER_LENGTH = 0x100;
-const METADATA_FILE_EXTENSION = `.unpack.json`;
+const FW_SUBSECTION_BLOCK_SIZE = 2048;
+const METADATA_FILE_EXTENSION = `.unpack`;
 
 function parseHeader(headerString) {
     let parsedHeader = {
@@ -105,6 +106,16 @@ function identifyVersion(header) {
     return dvrVersions[0];
 }
 
+function calculateChecksum(buffer) {
+    let sum = 0;
+
+    for (let i = 0; i < buffer.length; i++) {
+        sum += buffer.readUInt8(i);
+    }
+
+    return sum;
+}
+
 function readSections(fileName, sectionReadCallback) {
     const fd = fs.openSync(fileName, 'r');
     const headerBuffer = Buffer.alloc(FW_SECTION_HEADER_LENGTH);
@@ -169,10 +180,7 @@ function readSections(fileName, sectionReadCallback) {
         }
 
         // Calculate and test checksum
-        let sum = 0;
-        for (let i = 0; i < sectionBuffer.length; i++) {
-            sum += sectionBuffer.readUInt8(i);
-        }
+        const sum = calculateChecksum(sectionBuffer);
 
         if (sum !== header.sectionSum) {
             throw `Checksum test failed: ${sum} != ${header.sectionSum}`;
@@ -326,6 +334,17 @@ function unpackSection(data, sectionDecompressedCallback) {
     });
 }
 
+function prepareHeader(rawHeader) {
+    // Append CR LF
+    rawHeader += '\r\n';
+
+    // Pad the header to the output header length
+    rawHeader = S(rawHeader).padRight(FW_SECTION_HEADER_LENGTH).s;
+
+    // Return as buffer
+    return Buffer.from(rawHeader, 'ascii');
+}
+
 function flipRegion(fileName, targetDirectory) {
     const INT = 'M1INT';
     const CN = 'M1CN';
@@ -351,13 +370,7 @@ function flipRegion(fileName, targetDirectory) {
         // Flip CN <-> INT
         let modifiedRawHeader = rawHeader.replace(sourceRegion, targetRegion);
 
-        // Append CR LF
-        modifiedRawHeader += '\r\n';
-
-        // Pad the header to the output header length
-        modifiedRawHeader = S(modifiedRawHeader).padRight(FW_SECTION_HEADER_LENGTH).s;
-
-        outputBuffers.push(Buffer.from(modifiedRawHeader, 'ascii'));
+        outputBuffers.push(prepareHeader(modifiedRawHeader));
         outputBuffers.push(data);
     });
 
@@ -412,6 +425,71 @@ function test(fileName) {
     });
 }
 
+function repack(fileName, directory) {
+    const metadataFileName = fileName + METADATA_FILE_EXTENSION;
+
+    if (!fs.existsSync(metadataFileName)) {
+        throw `cannot repack, metadata file not found (${metadataFileName})`;
+    }
+
+    const metadata = JSON.parse(fs.readFileSync(metadataFileName, 'utf8'));
+    const repackedFileName = fileName + `.repacked`;
+    const outputBuffers = [];
+
+    metadata.sections.forEach(sectionMetadata => {
+        const sectionFileName = path.join(directory, sectionMetadata.filename);
+        let sectionData = [];
+
+        if (sectionMetadata.subsections && sectionMetadata.subsections.length > 0) {
+            const subsectionBuffers = [];
+
+            sectionMetadata.subsections.forEach(subsectionMetadata => {
+                let subsectionData;
+
+                if (subsectionMetadata.compressed) {
+                    const subsectionFileName = path.join(directory, subsectionMetadata.filenameDecompressed);
+                    console.log(`Reading ${subsectionFileName}`);
+                    subsectionData = fs.readFileSync(subsectionFileName);
+                    console.log(`Compressing...`);
+                    subsectionData = compress(subsectionData);
+                } else {
+                    const subsectionFileName = path.join(directory, subsectionMetadata.filename);
+                    console.log(`Reading ${subsectionFileName}`);
+                    subsectionData = fs.readFileSync(subsectionFileName);
+                }
+                subsectionBuffers.push(subsectionData);
+
+                // pad subsection with zeros to block size
+                const subsectionDataLength = subsectionData.length;
+                const requiredPadding = (FW_SUBSECTION_BLOCK_SIZE - (subsectionDataLength % FW_SUBSECTION_BLOCK_SIZE)) % FW_SUBSECTION_BLOCK_SIZE;
+                subsectionBuffers.push(Buffer.alloc(requiredPadding));
+            });
+
+            sectionData = Buffer.concat(subsectionBuffers);
+        } else {
+            console.log(`Reading ${sectionFileName}`);
+            sectionData = fs.readFileSync(sectionFileName);
+        }
+
+        // update header
+        let header = sectionMetadata.rawHeader;
+        header = header.replace(`${sectionMetadata.parsedHeader.sectionLength}`, `${sectionData.length}`);
+        const checksum = calculateChecksum(sectionData);
+        header = header.replace(`${sectionMetadata.parsedHeader.sectionSum}`, `${checksum}`);
+        const headerData = prepareHeader(header);
+
+        outputBuffers.push(headerData);
+        outputBuffers.push(sectionData);
+    });
+
+    const outputBuffer = Buffer.concat(outputBuffers);
+
+    console.log(`Writing ${repackedFileName}`);
+    fs.writeFileSync(repackedFileName, outputBuffer);
+    console.log(`Finished!`);
+}
+
 exports.unpack = unpack;
 exports.flipRegion = flipRegion;
 exports.test = test;
+exports.repack = repack;
