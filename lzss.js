@@ -5,6 +5,8 @@
  */
 'use strict';
 
+const S = require('string');
+
 const LOOKUP_BUFFER_SIZE = 0x1000;
 
 class RingBuffer {
@@ -235,6 +237,8 @@ function decompress(buffer, lookupBufferOffset) {
 }
 
 function compress(buffer, lookupBufferOffset) {
+    const VERBOSE = true;
+
     let bufferByteIndex = 0;
     const lookupBuffer = new RingBuffer(LOOKUP_BUFFER_SIZE, (LOOKUP_BUFFER_SIZE + lookupBufferOffset) % LOOKUP_BUFFER_SIZE);
     const outputBuffer = Buffer.alloc(buffer.length * 2); // compressed data should never be larger than the uncompressed data but just to be save we use a larger buffer
@@ -275,14 +279,15 @@ function compress(buffer, lookupBufferOffset) {
 
             if (index === -1 || length < 3) {
                 // Lookup was unsuccessful, we just copy the byte into the output
-                // console.log('copy byte');
                 flags.push(true); // true === copy byte
                 const nextByte = readNextByte();
                 outputBuffer.push(nextByte);
                 lookupBuffer.appendUInt8(nextByte);
+                if (VERBOSE) {
+                    console.log(`copy byte 0x${nextByte.toString(16)}`);
+                }
             } else {
                 // Lookup success
-                // console.log('lookup success', length, index);
                 flags.push(false); // false === lookup bytes
 
                 if (index > 0x0FFF) {
@@ -301,11 +306,21 @@ function compress(buffer, lookupBufferOffset) {
                 for (let i = 0; i < length; i++) {
                     lookupBuffer.appendUInt8(readNextByte());
                 }
+
+                if (VERBOSE) {
+                    console.log(`lookup success 0x${toHexString(lookup1 << 8 | lookup2, 2)} ${length}@${index} `);
+                }
             }
         }
 
         // We have 8 flags, so we can now write the flags byte...
-        writeNextByte(encodeFlagByte(flags));
+        const flagByte = encodeFlagByte(flags);
+        if (VERBOSE) {
+            const flagsByteBinaryString = toBitString(flagByte, 8);
+            const flagsString = flags.map((flag) => flag ? 'C' : 'L').reduce((a, b) => a + b);
+            console.log(`flag: 0x${toHexString(flagByte, 1)}/${flagsByteBinaryString} => ${flagsString}`);
+        }
+        writeNextByte(flagByte);
         // ... and the pertaining data (data & lookup)
         outputBuffer.forEach(byte => writeNextByte(byte));
     }
