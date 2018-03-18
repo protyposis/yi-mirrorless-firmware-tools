@@ -276,6 +276,14 @@ function compress(buffer, lookupBufferOffset) {
         while (flags.length < 8) {
             const remainingInputBytes = buffer.length - bufferByteIndex;
 
+            if (remainingInputBytes === 0) {
+                // Fill up flags and exit encoding loop
+                while(flags.length < 8) {
+                    flags.push(true);
+                }
+                break;
+            }
+
             // Read 18 bytes (the max number of bytes we can lookup)
             const lookup = [];
             for (let i = 0; i < Math.min(18, remainingInputBytes); i++) {
