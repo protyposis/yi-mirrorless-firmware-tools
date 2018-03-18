@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const S = require('string');
 const {versions} = require('./versions');
-const {decompress, compress} = require('./lzss');
+const lzss = require('./lzss');
 
 const FW_SECTION_HEADER_LENGTH = 0x100;
 const FW_SUBSECTION_BLOCK_SIZE = 2048;
@@ -317,7 +317,7 @@ function unpackSection(data, sectionDecompressedCallback) {
 
         if (compressed) {
             console.log(`Decompressing...`);
-            processedSectionData = decompress(sectionData);
+            processedSectionData = lzss.decompress(sectionData);
 
             const stats = {
                 inputSize: sectionData.length,
@@ -394,8 +394,8 @@ function test(fileName) {
                 console.log(`Section ${sectionNumber}.${index}`);
 
                 if (compressed) {
-                    const recompressedData = compress(processedSectionData);
-                    const redecompressedData = decompress(recompressedData);
+                    const recompressedData = lzss.compress(processedSectionData);
+                    const redecompressedData = lzss.decompress(recompressedData);
 
                     const l1 = processedSectionData.length;
                     const l2 = redecompressedData.length;
@@ -451,7 +451,7 @@ function repack(fileName, directory) {
                     console.log(`Reading ${subsectionFileName}`);
                     subsectionData = fs.readFileSync(subsectionFileName);
                     console.log(`Compressing...`);
-                    subsectionData = compress(subsectionData);
+                    subsectionData = lzss.compress(subsectionData);
                 } else {
                     const subsectionFileName = path.join(directory, subsectionMetadata.filename);
                     console.log(`Reading ${subsectionFileName}`);
