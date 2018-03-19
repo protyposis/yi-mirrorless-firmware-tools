@@ -154,8 +154,12 @@ const logLookup = (position, lookupByte1, lookupByte2, index, length) => {
  * @param buffer
  * @returns {Buffer}
  */
-function decompress(buffer) {
+function decompress(buffer, options) {
     const VERBOSE = false;
+
+    if (options === undefined) {
+        options = {};
+    }
 
     let bufferByteIndex = 0;
     const lookupBuffer = new RingBuffer(LOOKUP_BUFFER_SIZE, LOOKUP_BUFFER_SIZE - LOOKUP_MAX_LENGTH);
@@ -246,6 +250,10 @@ function decompress(buffer) {
                     lookupBytes.push(bufferByte);
                 }
 
+                if (options.lookupCallback) {
+                    options.lookupCallback([bufferByteIndex - 2, lookupIndex, lookupLength, lookupBuffer.bufferIndex]);
+                }
+
                 lookupBytes.forEach(byte => {
                     lookupBuffer.appendUInt8(byte);
                     writeNextByte(byte);
@@ -257,8 +265,12 @@ function decompress(buffer) {
     return outputBuffer.slice(0, outputBufferByteIndex);
 }
 
-function compress(buffer) {
+function compress(buffer, options) {
     const VERBOSE = false;
+
+    if (options === undefined) {
+        options = {};
+    }
 
     let bufferByteIndex = 0;
     const lookupBuffer = new RingBuffer(LOOKUP_BUFFER_SIZE, LOOKUP_BUFFER_SIZE - LOOKUP_MAX_LENGTH);
@@ -304,7 +316,7 @@ function compress(buffer) {
             if (remainingInputBytes === 0) {
                 // Fill up flags & write buffer and exit compression loop
                 console.log(`early end detected`);
-                while(flags.length < 8) {
+                while (flags.length < 8) {
                     flags.push(true);
                     outputBuffer.push(0);
                 }
@@ -351,12 +363,15 @@ function compress(buffer) {
                 outputBuffer.push(lookup1);
                 outputBuffer.push(lookup2);
 
-                for (let i = 0; i < length; i++) {
-                    lookupBuffer.appendUInt8(readNextByte());
-                }
-
                 if (VERBOSE) {
                     logLookup(outputBufferByteIndex + outputBuffer.length - 1, lookup1, lookup2, index, length);
+                }
+                if (options.lookupCallback) {
+                    options.lookupCallback([outputBufferByteIndex + outputBuffer.length - 1, index, length, lookupBuffer.bufferIndex]);
+                }
+
+                for (let i = 0; i < length; i++) {
+                    lookupBuffer.appendUInt8(readNextByte());
                 }
             }
         }
