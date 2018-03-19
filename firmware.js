@@ -154,7 +154,12 @@ function readSections(fileName, sectionReadCallback) {
         if (sectionCount === 0) {
             try {
                 version = identifyVersion(header);
-                console.info(`Firmware version identified: ${version[3]}`);
+                const info =
+                    '#####################################################################\n' +
+                    '# Firmware version identified: $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ #\n' +
+                    '#####################################################################';
+                const placeholder = '$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$';
+                console.info(info.replace(placeholder, S(version[3]).padRight(placeholder.length).s));
             } catch (error) {
                 const warning =
                     '# WARNING ###########################################################\n' +
