@@ -236,7 +236,7 @@ function decompress(buffer) {
                 const lookupLength = (lookup2 & 0x0F) + LOOKUP_MIN_LENGTH;
 
                 if (VERBOSE) {
-                    logLookup(bufferByteIndex - 1, lookup1, lookup2, lookupIndex, lookupLength);
+                    logLookup(bufferByteIndex - 2, lookup1, lookup2, lookupIndex, lookupLength);
                 }
 
                 // Read bytes from lookup buffer
