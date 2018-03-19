@@ -15,6 +15,8 @@ Usage:
 
 The output will be a number of files (usually 4) named `firmware.bin.{sectionNumber}[.{sectionId}]`.
 
+**ATTENTION: the firmware decompression/compression is not yet 100% correct, do not attempt to flash a repacked firmware file or it may damage the camera!**
+
 Firmware analysis
 -----------------
 
