@@ -251,7 +251,7 @@ function decompress(buffer, options) {
                 }
 
                 if (options.lookupCallback) {
-                    options.lookupCallback([bufferByteIndex - 2, lookupIndex, lookupLength, lookupBuffer.bufferIndex]);
+                    options.lookupCallback([bufferByteIndex - 2, outputBufferByteIndex, lookupIndex, lookupLength, lookupBuffer.bufferIndex]);
                 }
 
                 lookupBytes.forEach(byte => {
@@ -367,7 +367,7 @@ function compress(buffer, options) {
                     logLookup(outputBufferByteIndex + outputBuffer.length - 1, lookup1, lookup2, index, length);
                 }
                 if (options.lookupCallback) {
-                    options.lookupCallback([outputBufferByteIndex + outputBuffer.length - 1, index, length, lookupBuffer.bufferIndex]);
+                    options.lookupCallback([outputBufferByteIndex + outputBuffer.length - 1, bufferByteIndex, index, length, lookupBuffer.bufferIndex]);
                 }
 
                 for (let i = 0; i < length; i++) {
