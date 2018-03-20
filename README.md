@@ -3,7 +3,7 @@ YI M1 Mirrorless Camera Firmware Tools
 
 A firmware unpacker & repacker for YI M1 firmware files. Parses the section headers of a firmware file, extracts the sections into separate files, and splits and decompresses the firmware code section. It can also change the region of firmware files between Chinese (CN) to International (INT) to install the international firmware on Chinese models and vice versa.
 
-Requirements: Node.js & npm
+Requirements: [Node.js & npm](https://nodejs.org) (recommended: v8.10.0 LTS)
  
 Usage: 
  1. `npm install`
