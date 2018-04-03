@@ -530,6 +530,15 @@ function repack(fileName, directory) {
 
     console.log(`Writing ${repackedFileName}`);
     fs.writeFileSync(repackedFileName, outputBuffer);
+
+    const warning =
+        '# WARNING ###########################################################\n' +
+        '# Do not flash this firmware unless you know exactly what you are   #\n' +
+        '# doing! This is not tested and will most likely destroy your       #\n' +
+        '# camera!                                                           #\n' +
+        '#####################################################################';
+    console.warn(warning);
+
     console.log(`Finished!`);
 }
 
